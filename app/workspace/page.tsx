@@ -875,7 +875,7 @@ export default function WorkspacePage() {
                 {/* 原文预览 */}
                 <div
                   className={cn(
-                    "bg-gray-50 rounded-lg border border-gray-200 p-6",
+                    "bg-gray-50 rounded-lg border border-gray-200 p-6 h-full",
                     previewMode === "single" && "hidden lg:block",
                   )}
                 >
@@ -899,7 +899,7 @@ export default function WorkspacePage() {
                 </div>
 
                 {/* 译文预览 */}
-                <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 h-full">
                   <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Languages className="h-5 w-5" />
                     译文预览

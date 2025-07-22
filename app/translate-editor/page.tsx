@@ -334,7 +334,7 @@ export default function TranslateEditorPage() {
 
             {/* AI交互面板 */}
             {showAIPanel && (
-              <div className="w-96 border-l border-gray-200 bg-white flex flex-col h-full">
+              <div className="w-96 h-screen border-l border-gray-200 bg-white flex flex-col overflow-hidden">
                 {/* AI面板头部 */}
                 <div className="p-4 border-b border-gray-200 bg-blue-50">
                   <div className="flex items-center justify-between">
