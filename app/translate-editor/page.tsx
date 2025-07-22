@@ -241,7 +241,7 @@ export default function TranslateEditorPage() {
   }, [chatMessages])
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       {/* 页面头部 */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -267,7 +267,7 @@ export default function TranslateEditorPage() {
       </header>
 
       {/* 主要内容区域 */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden h-full">
         {/* 左侧：原文显示 */}
         <div className="w-1/2 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200 bg-gray-50">
@@ -278,7 +278,7 @@ export default function TranslateEditorPage() {
             <p className="text-sm text-gray-600 mt-1">只读模式，供参考对照</p>
           </div>
 
-          <div className="flex-1 p-6 overflow-auto">
+          <div className="flex-1 p-6 overflow-y-auto">
             <div className="prose prose-sm max-w-none">
               <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-relaxed">{originalContent}</pre>
             </div>
@@ -321,13 +321,13 @@ export default function TranslateEditorPage() {
 
           <div className="flex-1 flex">
             {/* 译文编辑区 */}
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-6 overflow-y-auto">
               <Textarea
                 ref={textareaRef}
                 value={editableContent}
                 onChange={(e) => setEditableContent(e.target.value)}
                 onSelect={handleTextSelection}
-                className="w-full h-full resize-none border-0 focus:ring-0 text-base leading-relaxed"
+                className="w-full h-full resize-none border-0 focus:ring-0 text-base leading-relaxed overflow-y-auto"
                 placeholder="译文内容将显示在这里..."
               />
             </div>
@@ -392,7 +392,7 @@ export default function TranslateEditorPage() {
                 )}
 
                 {/* 聊天消息区域 */}
-                <div className="flex-1 overflow-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {chatMessages.length === 0 ? (
                     <div className="text-center text-gray-500 mt-8">
                       <Sparkles className="h-8 w-8 mx-auto mb-2 text-gray-300" />
