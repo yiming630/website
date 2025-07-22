@@ -199,6 +199,7 @@ export default function WorkspacePage() {
   const [pageState, setPageState] = useState("configuring") // configuring | translating | completed
   const [translationProgress, setTranslationProgress] = useState(0)
   const [translationStatus, setTranslationStatus] = useState("")
+  const [currentStepIndex, setCurrentStepIndex] = useState(0) // 当前步骤索引
   const [conversionCompleted, setConversionCompleted] = useState(false) // 转换完成状态
 
 
@@ -339,6 +340,7 @@ export default function WorkspacePage() {
 
         const currentStep = translationSteps[currentStepIndex]
         setTranslationStatus(currentStep.status)
+        setCurrentStepIndex(currentStepIndex)
 
         // 检查是否到达转换完成步骤
         if (currentStep.status === "转换为DOCX格式..." && !conversionCompleted) {
@@ -377,6 +379,7 @@ export default function WorkspacePage() {
     setShowFeedbackInput(false)
     setError(null)
     setSelectedTask(null)
+    setCurrentStepIndex(0)
     setConversionCompleted(false)
   }
 
@@ -732,20 +735,20 @@ export default function WorkspacePage() {
               {/* 类似 Vercel 的流式输出显示 */}
               <div className="bg-gray-900 rounded-lg p-6 mb-8 font-mono text-left text-sm text-gray-300">
                 <div className="space-y-2">
-                  {translationSteps
-                    .slice(0, Math.floor((translationProgress / 100) * translationSteps.length))
-                    .map((step, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                  {translationSteps.map((step, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      {index < currentStepIndex ? (
                         <span className="text-emerald-400">✓</span>
-                        <span>{step.status}</span>
-                      </div>
-                    ))}
-                  {translationProgress < 100 && (
-                    <div className="flex items-center gap-2 text-blue-400">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span>{translationStatus}</span>
+                      ) : index === currentStepIndex && translationProgress < 100 ? (
+                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                      ) : (
+                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      )}
+                      <span className={index < currentStepIndex ? "text-gray-300" : index === currentStepIndex ? "text-blue-400" : "text-gray-500"}>
+                        {step.status}
+                      </span>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
 
