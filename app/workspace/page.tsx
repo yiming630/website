@@ -50,6 +50,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useFile as useFileContext } from "@/context/file-context"
 import type React from "react"
@@ -189,6 +190,8 @@ const translationStyles = [
  * 包含左侧项目列表、中央工作区和右侧用户面板
  */
 export default function WorkspacePage() {
+  const router = useRouter()
+  
   // 文件相关状态
   const { file: contextFile, setFile: setContextFile } = useFileContext()
   const [file, setFile] = useState<File | null>(contextFile)
@@ -320,48 +323,11 @@ export default function WorkspacePage() {
       alert("请选择一个细分翻译领域！")
       return
     }
-    setPageState("translating")
+    // 跳转到翻译进度页面
+    router.push("/translating")
   }
 
-  // 翻译进度模拟 - 更新为包含转换步骤
-  useEffect(() => {
-    if (pageState === "translating") {
-      let currentStepIndex = 0
-      let progress = 0
-      const totalDuration = translationSteps.reduce((acc, step) => acc + step.duration, 0)
 
-      const runStep = () => {
-        if (currentStepIndex >= translationSteps.length) {
-          setTranslationProgress(100)
-          setTranslationStatus("翻译完成！")
-          setTimeout(() => setPageState("completed"), 500)
-          return
-        }
-
-        const currentStep = translationSteps[currentStepIndex]
-        setTranslationStatus(currentStep.status)
-        setCurrentStepIndex(currentStepIndex)
-
-        // 检查是否到达转换完成步骤
-        if (currentStep.status === "转换为DOCX格式..." && !conversionCompleted) {
-          setTimeout(() => {
-            setConversionCompleted(true)
-          }, currentStep.duration - 500)
-        }
-
-        const stepProgress = (currentStep.duration / totalDuration) * 100
-        progress += stepProgress
-        setTranslationProgress(Math.min(progress, 100))
-
-        setTimeout(() => {
-          currentStepIndex++
-          runStep()
-        }, currentStep.duration)
-      }
-
-      runStep()
-    }
-  }, [pageState, conversionCompleted])
 
   /**
    * 重置所有状态
@@ -724,200 +690,6 @@ export default function WorkspacePage() {
    * 根据当前状态显示不同的内容
    */
   const renderCenterPanel = () => {
-    // 翻译进行中状态
-    if (pageState === "translating") {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="w-full max-w-2xl p-8 bg-white rounded-lg shadow-lg">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">正在为您处理文档...</h2>
-
-              {/* 类似 Vercel 的流式输出显示 */}
-              <div className="bg-gray-900 rounded-lg p-6 mb-8 font-mono text-left text-sm text-gray-300">
-                <div className="space-y-2">
-                  {translationSteps.map((step, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      {index < currentStepIndex ? (
-                        <span className="text-emerald-400">✓</span>
-                      ) : index === currentStepIndex && translationProgress < 100 ? (
-                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                      ) : (
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                      )}
-                      <span className={index < currentStepIndex ? "text-gray-300" : index === currentStepIndex ? "text-blue-400" : "text-gray-500"}>
-                        {step.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-
-
-              {/* 进度条 */}
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                <div
-                  className="bg-gradient-to-r from-blue-500 to-emerald-500 h-2.5 rounded-full transition-all duration-1000 ease-linear"
-                  style={{ width: `${translationProgress}%` }}
-                ></div>
-              </div>
-              <p className="text-gray-600">{Math.round(translationProgress)}% 完成</p>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    // 翻译完成状态 - 重新设计的界面
-    if (pageState === "completed") {
-      return (
-        <div className="p-6 h-full overflow-y-auto">
-          <div className="max-w-6xl mx-auto">
-            {/* 操作面板 - 放在页面上方 */}
-            <Card className="mb-6 bg-white border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex flex-wrap gap-4 items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileIcon className="h-8 w-8 text-blue-500" />
-                    <div>
-                      <p className="font-semibold text-gray-900">{file?.name}</p>
-                      <p className="text-sm text-gray-500">
-                        翻译完成 • {file && `${(file.size / 1024 / 1024).toFixed(2)} MB`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-
-
-                    {/* 预览模式切换 */}
-                    <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                      <Button
-                        variant={previewMode === "side-by-side" ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => setPreviewMode("side-by-side")}
-                        className="h-8"
-                      >
-                        <FileDiff className="w-4 h-4 mr-1" />
-                        对照
-                      </Button>
-                      <Button
-                        variant={previewMode === "single" ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => setPreviewMode("single")}
-                        className="h-8"
-                      >
-                        <FileText className="w-4 h-4 mr-1" />
-                        单页
-                      </Button>
-                    </div>
-
-                    {/* 翻译质量反馈 */}
-                    <div className="flex gap-1">
-                      <Button
-                        variant={feedback === "good" ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => {
-                          setFeedback("good")
-                          setShowFeedbackInput(false)
-                        }}
-                      >
-                        <ThumbsUp className="w-4 h-4 mr-1" />
-                        好评
-                      </Button>
-                      <Button
-                        variant={feedback === "bad" ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => {
-                          setFeedback("bad")
-                          setShowFeedbackInput(true)
-                        }}
-                      >
-                        <ThumbsDown className="w-4 h-4 mr-1" />
-                        差评
-                      </Button>
-                    </div>
-
-                    {/* 返回并重新翻译 */}
-                    <Button variant="outline" size="sm" onClick={() => setPageState("configuring")}>
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      重新翻译
-                    </Button>
-
-                    {/* 对译文进行操作 */}
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href="/translate-editor">
-                        <Edit3 className="w-4 h-4 mr-2" />
-                        编辑译文
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* 反馈输入框 */}
-                {showFeedbackInput && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <Textarea placeholder="请告诉我们哪里需要改进..." className="mb-3" />
-                    <Button size="sm">提交反馈</Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* 预览区域 - 占据页面下方全部空间 */}
-            <div className="flex-1">
-              <div
-                className={cn(
-                  "grid gap-6 h-[calc(100vh-280px)]",
-                  previewMode === "side-by-side" ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1",
-                )}
-              >
-                {/* 原文预览 */}
-                <div
-                  className={cn(
-                    "bg-gray-50 rounded-lg border border-gray-200 p-6 h-full",
-                    previewMode === "single" && "hidden lg:block",
-                  )}
-                >
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    原文预览
-                  </h4>
-                  <div className="w-full h-full bg-white rounded-lg border border-gray-200 p-4 overflow-y-auto">
-                    <div className="text-gray-600 leading-relaxed">
-                      <p className="mb-4">这里显示原文档的内容...</p>
-                      <p className="mb-4">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
-                        labore et dolore magna aliqua.
-                      </p>
-                      <p className="mb-4">
-                        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-                        consequat.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 译文预览 */}
-                <div className="bg-gray-50 rounded-lg border border-gray-200 p-6 h-full">
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Languages className="h-5 w-5" />
-                    译文预览
-                  </h4>
-                  <div className="w-full h-full bg-white rounded-lg border border-gray-200 p-4 overflow-y-auto">
-                    <div className="text-gray-600 leading-relaxed">
-                      <p className="mb-4">这里显示翻译后的内容...</p>
-                      <p className="mb-4">这是一段示例文本，展示翻译后的效果。文档的格式和布局都得到了完美的保持。</p>
-                      <p className="mb-4">翻译质量经过AI优化，确保准确性和流畅性。</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    }
 
     // 根据中央状态渲染不同内容
     switch (centerState) {

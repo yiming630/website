@@ -241,7 +241,7 @@ export default function TranslateEditorPage() {
   }, [chatMessages])
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-y-auto">
+    <div className="flex flex-col h-screen bg-gray-50">
       {/* 页面头部 */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -267,7 +267,7 @@ export default function TranslateEditorPage() {
       </header>
 
       {/* 主要内容区域 */}
-      <div className="flex-1 flex overflow-hidden h-full">
+      <div className="flex-1 flex overflow-hidden">
         {/* 左侧：原文显示 */}
         <div className="w-1/2 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200 bg-gray-50">
@@ -334,7 +334,7 @@ export default function TranslateEditorPage() {
 
             {/* AI交互面板 */}
             {showAIPanel && (
-              <div className="w-96 h-screen border-l border-gray-200 bg-white flex flex-col overflow-hidden">
+              <div className="w-96 border-l border-gray-200 bg-white flex flex-col h-full">
                 {/* AI面板头部 */}
                 <div className="p-4 border-b border-gray-200 bg-blue-50">
                   <div className="flex items-center justify-between">

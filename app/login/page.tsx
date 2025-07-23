@@ -205,56 +205,56 @@ export default function LoginPage() {
             {loginMethod === "phone" && (
               <form onSubmit={handlePhoneLogin} className="space-y-4">
                 {/* 手机号输入 */}
-                <div className="space-y-2">
+              <div className="space-y-2">
                   <Label htmlFor="phone">手机号</Label>
-                  <div className="relative">
+                <div className="relative">
                     <Smartphone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
+                  <Input
                       id="phone"
                       type="tel"
                       placeholder="请输入手机号"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+                    className="pl-10"
+                    required
+                  />
                 </div>
+              </div>
 
                 {/* 验证码输入 */}
-                <div className="space-y-2">
+              <div className="space-y-2">
                   <Label htmlFor="code">验证码</Label>
                   <div className="flex gap-2">
-                    <Input
+                  <Input
                       id="code"
                       type="text"
                       placeholder="请输入验证码"
                       value={verificationCode}
                       onChange={(e) => setVerificationCode(e.target.value)}
                       className="flex-1"
-                      required
-                    />
+                    required
+                  />
                     <Button
-                      type="button"
+                    type="button"
                       variant="outline"
                       onClick={handleSendCode}
                       disabled={countdown > 0 || isLoading}
                       className="px-4"
-                    >
+                  >
                       {countdown > 0 ? `${countdown}s` : "获取验证码"}
                     </Button>
-                  </div>
-                </div>
+              </div>
+              </div>
 
-                {/* 登录按钮 */}
+              {/* 登录按钮 */}
                 <Button 
                   type="submit" 
                   className="w-full bg-green-600 hover:bg-green-700" 
                   disabled={isLoading}
                 >
-                  {isLoading ? "登录中..." : "登录"}
-                </Button>
-              </form>
+                {isLoading ? "登录中..." : "登录"}
+              </Button>
+            </form>
             )}
 
             <Separator className="my-6" />
