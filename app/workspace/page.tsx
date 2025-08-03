@@ -192,6 +192,9 @@ const translationStyles = [
 export default function WorkspacePage() {
   const router = useRouter()
   
+  // 获取用户类型
+  const [userType, setUserType] = useState<'reader' | 'professional' | null>(null)
+  
   // 文件相关状态
   const { file: contextFile, setFile: setContextFile } = useFileContext()
   const [file, setFile] = useState<File | null>(contextFile)
@@ -243,6 +246,12 @@ export default function WorkspacePage() {
       handleFileSelect(contextFile)
     }
   }, [contextFile])
+
+  // 获取用户类型
+  useEffect(() => {
+    const type = localStorage.getItem('userType') as 'reader' | 'professional'
+    setUserType(type || 'professional') // 默认为专业译者
+  }, [])
 
   // 根据当前状态决定中央面板显示内容
   useEffect(() => {
@@ -319,11 +328,11 @@ export default function WorkspacePage() {
    * 验证配置并启动翻译流程
    */
   const handleStartTranslation = () => {
+    // 专业译者模式 - 需要选择领域
     if (!selectedSubCategory) {
       alert("请选择一个细分翻译领域！")
       return
     }
-    // 跳转到翻译进度页面
     router.push("/translating")
   }
 

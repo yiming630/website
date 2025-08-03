@@ -335,7 +335,7 @@ export default function HomePage() {
               </div>
               <div className="space-x-4">
                 <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
-                  <Link href="/workspace">
+                  <Link href="/user-type">
                     立即开始翻译
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
