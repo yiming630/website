@@ -314,7 +314,7 @@ export default function HomePage() {
             <Link href="/login">登录</Link>
           </Button>
           <Button asChild className="bg-blue-600 hover:bg-blue-700">
-            <Link href="/workspace">免费体验</Link>
+            <Link href="/user-type">免费体验</Link>
           </Button>
         </div>
       </header>
@@ -476,7 +476,7 @@ export default function HomePage() {
               </div>
               <div className="space-x-4">
                 <Button size="lg" variant="secondary" asChild>
-                  <Link href="/workspace">
+                  <Link href="/user-type">
                     免费开始翻译
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
