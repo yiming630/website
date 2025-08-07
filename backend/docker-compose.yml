@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-translation_platform_dev}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./databases/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./databases/setup.sql:/docker-entrypoint-initdb.d/00-setup.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-translation_platform_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+  # Redis for caching and sessions (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+  # API Gateway Service
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4000
+      HOST: 0.0.0.0
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-translation_platform_dev}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      REDIS_URL: redis://redis:6379
+      WEBSOCKET_HOST: 0.0.0.0
+    ports:
+      - "${API_GATEWAY_PORT:-4000}:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+  # Document Processing Service
+  document-service:
+    build:
+      context: ./services/document-service
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-translation_platform_dev}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      GOOGLE_CLOUD_PROJECT_ID: ${GOOGLE_CLOUD_PROJECT_ID}
+      GOOGLE_CLOUD_STORAGE_BUCKET: ${GOOGLE_CLOUD_STORAGE_BUCKET}
+    ports:
+      - "${DOCUMENT_SERVICE_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - document_uploads:/app/temp_uploads
+      - document_processed:/app/processed
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  document_uploads:
+    driver: local
+  document_processed:
+    driver: local
+
+networks:
+  translation-network:
+    driver: bridge

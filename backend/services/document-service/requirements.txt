@@ -1,0 +1,52 @@
+# FastAPI Document Processing Service Dependencies
+
+# Core FastAPI dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+
+# File processing (reuse existing modules)
+python-docx==1.1.0
+pypdf==3.17.0
+python-multipart==0.0.6
+
+# HTTP client
+httpx==0.25.2
+aiohttp==3.9.0
+
+# Environment and configuration
+python-dotenv==1.0.0
+
+# Utilities
+tenacity==8.2.3
+uuid==1.30
+
+# Document processing utilities
+pillow==10.1.0
+python-magic==0.4.27
+
+# Async task queue (for background processing)
+celery[redis]==5.3.4
+redis==5.0.1
+
+# Google Cloud (existing integration)
+google-generativeai==0.3.0
+google-cloud-storage==2.10.0
+
+# Logging and monitoring
+structlog==23.2.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Development
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
