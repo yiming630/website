@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -16,9 +16,11 @@ import {
   Paperclip,
   Mic,
   Send,
+  HelpCircle,
 } from 'lucide-react'
 import { ChatMessage, MentionedItem } from '@/app/translate-editor/types'
 import { aiOptions, enhancedOptions, aiAssistantCategories } from '@/app/translate-editor/constants'
+import { AITutorial } from './AITutorial'
 
 interface AIChatPanelProps {
   chatMessages: ChatMessage[]
@@ -52,6 +54,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
   onAddActionToMentions,
 }) => {
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   useEffect(() => {
     // 自动滚动到最新消息
@@ -81,6 +84,15 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
             <p className="text-xs text-blue-100 mt-1">随时为您提供帮助</p>
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-white hover:bg-white/20 flex items-center gap-2"
+          onClick={() => setShowTutorial(true)}
+        >
+          <HelpCircle className="h-4 w-4" />
+          <span className="text-sm">查看使用教程</span>
+        </Button>
       </div>
       
       {/* 聊天消息区域 */}
@@ -286,6 +298,9 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
           </Button>
         </div>
       </div>
+      
+      {/* AI使用教程弹窗 */}
+      <AITutorial isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
     </div>
   )
 }
