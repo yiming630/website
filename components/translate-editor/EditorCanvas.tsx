@@ -225,17 +225,7 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
       <div className={cn('editor-canvas', className)}>
         <div className="bg-white shadow-lg rounded-lg overflow-hidden" style={{ maxWidth: '816px', margin: '0 auto' }}>
           {/* 纸张效果 */}
-          <div className="bg-gradient-to-b from-gray-50 to-white border-l-[1px] border-gray-200" style={{ marginLeft: '60px' }}>
-            {/* 页边距标尺线 */}
-            <div className="absolute left-0 top-0 bottom-0 w-[60px] bg-gray-50 border-r border-gray-200">
-              <div className="h-full relative">
-                {/* 装订孔 */}
-                <div className="absolute left-6 top-20 w-2 h-2 bg-gray-400 rounded-full"></div>
-                <div className="absolute left-6 top-1/2 w-2 h-2 bg-gray-400 rounded-full"></div>
-                <div className="absolute left-6 bottom-20 w-2 h-2 bg-gray-400 rounded-full"></div>
-              </div>
-            </div>
-            
+          <div className="bg-gradient-to-b from-gray-50 to-white">
             {/* 编辑器内容 */}
             <EditorContent 
               editor={editor} 
