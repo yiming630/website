@@ -61,8 +61,8 @@ export const AITutorial: React.FC<AITutorialProps> = ({ isOpen, onClose }) => {
                   <li className="flex gap-2">
                     <span className="font-semibold text-blue-700">2.</span>
                     <div>
-                      <strong>选择操作</strong>
-                      <p className="text-gray-600 mt-1">从AI助手提供的功能选项中选择需要的操作，或输入自定义指令</p>
+                      <strong>选择功能</strong>
+                      <p className="text-gray-600 mt-1">从6个核心功能中选择需要的操作，或直接输入您的需求</p>
                     </div>
                   </li>
                   <li className="flex gap-2">
@@ -103,82 +103,48 @@ export const AITutorial: React.FC<AITutorialProps> = ({ isOpen, onClose }) => {
             <TabsContent value="features" className="space-y-4 px-1">
               <div className="space-y-4">
                 <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold mb-3 text-blue-900">📝 核心翻译优化</h3>
+                  <h3 className="font-semibold mb-3 text-blue-900">🌟 6大核心功能</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex gap-2">
-                      <span className="text-blue-600">•</span>
+                      <span className="text-blue-600">1.</span>
                       <div>
-                        <strong>重新翻译</strong>：使用不同算法重新生成译文
+                        <strong>多版本译文</strong>：为选中文字提供不同风格的译文版本
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <span className="text-blue-600">•</span>
+                      <span className="text-blue-600">2.</span>
                       <div>
-                        <strong>多版本译文</strong>：提供多个翻译版本供选择
+                        <strong>专业词汇检查</strong>：联网搜索验证专业词汇的正确性
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <span className="text-blue-600">•</span>
+                      <span className="text-blue-600">3.</span>
                       <div>
-                        <strong>逐词对照</strong>：显示原文与译文的对应关系
+                        <strong>用词斩酌</strong>：AI提供多种词汇选择供用户挑选
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-blue-600">4.</span>
+                      <div>
+                        <strong>语法拼写检查</strong>：检查并修正语法和拼写错误
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-blue-600">5.</span>
+                      <div>
+                        <strong>翻译质量自检</strong>：检查是否有信息缺失或表达不当
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-blue-600">6.</span>
+                      <div>
+                        <strong>提问</strong>：向AI提问关于选中文字的任何问题
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold mb-3 text-green-900">✨ 文本润色与风格调整</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex gap-2">
-                      <span className="text-green-600">•</span>
-                      <div>
-                        <strong>语气调整</strong>：专业、口语化、学术、说服力等风格切换
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-green-600">•</span>
-                      <div>
-                        <strong>语法检查</strong>：自动检测并修正语法和拼写错误
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-green-600">•</span>
-                      <div>
-                        <strong>内容调整</strong>：简化复杂内容或扩展简单描述
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold mb-3 text-purple-900">🔍 内容理解与信息提取</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex gap-2">
-                      <span className="text-purple-600">•</span>
-                      <div>
-                        <strong>智能问答</strong>：针对文本内容提问获取解答
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-purple-600">•</span>
-                      <div>
-                        <strong>摘要总结</strong>：快速提取文本核心要点
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-purple-600">•</span>
-                      <div>
-                        <strong>术语解释</strong>：解释专业术语和概念
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-purple-600">•</span>
-                      <div>
-                        <strong>信息提取</strong>：提取人名、地点、日期等关键信息
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
                 
                 <div className="border rounded-lg p-4 bg-gray-50">
                   <h3 className="font-semibold mb-3 text-gray-700">🔧 增强功能</h3>

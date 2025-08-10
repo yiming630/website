@@ -1,11 +1,10 @@
 import {
-  Sparkles,
-  Maximize2,
-  MessageCircle,
-  CheckCircle,
-  HelpCircle,
-  Edit3,
+  FileText,
   Search,
+  Edit3,
+  CheckCircle,
+  Shield,
+  HelpCircle,
   Brain,
   Globe,
 } from "lucide-react"
@@ -51,14 +50,44 @@ The Human Role: The Wisdom of Steering, Not Replacing
 
 A central question in this transformation is: what is the value of human beings? The answer is not a pessimistic 'replacement,' but a hopeful 'repositioning.' AI excels at computation and pattern recognition, but uniquely human attributes such as emotional intelligence, critical thinking, complex ethical judgment, and true creativity are difficult for machines to attain. Our future role will shift from being executors of tasks to being the drivers of AI tools, the arbiters of value, and the navigators of direction. Wisely using AI as a powerful tool—making it a partner that augments human capabilities rather than a competitor—tests our foresight and wisdom.`
 
-// AI操作选项
+// AI新功能选项 - 6个核心功能
 export const aiOptions = [
-  { icon: Sparkles, label: "润色", value: "polish" },
-  { icon: Maximize2, label: "扩写/缩写", value: "expand" },
-  { icon: MessageCircle, label: "改变语气", value: "tone" },
-  { icon: CheckCircle, label: "检查语法", value: "grammar" },
-  { icon: HelpCircle, label: "提问", value: "ask" },
-  { icon: Edit3, label: "其他指令", value: "other" },
+  { 
+    icon: FileText, 
+    label: "多版本译文", 
+    value: "multiple_versions",
+    description: "为选中文字提供不同风格的译文版本"
+  },
+  { 
+    icon: Search, 
+    label: "专业词汇检查", 
+    value: "term_check",
+    description: "联网搜索验证专业词汇的正确性"
+  },
+  { 
+    icon: Edit3, 
+    label: "用词斟酌", 
+    value: "word_refinement",
+    description: "AI提供多种词汇选择供用户挑选"
+  },
+  { 
+    icon: CheckCircle, 
+    label: "语法拼写检查", 
+    value: "grammar_spell",
+    description: "检查并修正语法和拼写错误"
+  },
+  { 
+    icon: Shield, 
+    label: "翻译质量自检", 
+    value: "quality_check",
+    description: "检查是否有信息缺失或表达不当"
+  },
+  { 
+    icon: HelpCircle, 
+    label: "提问", 
+    value: "ask_question",
+    description: "向AI提问关于选中文字的任何问题"
+  },
 ]
 
 // 增强功能选项
@@ -68,44 +97,8 @@ export const enhancedOptions = [
   { icon: Globe, label: "联网搜索", value: "web" },
 ]
 
-// AI助手功能分类选项
-export const aiAssistantCategories = [
-  {
-    title: "核心翻译优化",
-    description: "专注于提升翻译文本本身的质量和准确性",
-    icon: "🎯",
-    options: [
-      { label: "重新翻译", value: "retranslate", description: "使用不同的算法模型或措辞逻辑重新生成译文" },
-      { label: "提供多种译文版本", value: "alternatives", description: "提供几个不同措辞或风格的译文版本供选择" },
-      { label: "逐词/逐句对照", value: "alignment", description: "高亮显示原文和译文的对应关系" },
-    ]
-  },
-  {
-    title: "文本润色与风格调整",
-    description: "改善译文的表达方式，使其更符合特定的语境和要求",
-    icon: "✨",
-    options: [
-      { label: "更专业", value: "professional", description: "适用于商务邮件、报告等" },
-      { label: "更口语化/友好", value: "casual", description: "适用于社交媒体、即时通讯等" },
-      { label: "更学术", value: "academic", description: "适用于论文、研究性文章" },
-      { label: "更具说服力", value: "persuasive", description: "适用于市场营销文案" },
-      { label: "语法和拼写检查", value: "grammar_check", description: "自动检测并修正语法、拼写和标点问题" },
-      { label: "简化内容", value: "simplify", description: "将复杂的长句或专业术语改写成更简单易懂的语言" },
-      { label: "扩展内容", value: "elaborate", description: "增加更多细节、解释或示例，使内容更丰富" },
-    ]
-  },
-  {
-    title: "内容理解与信息提取",
-    description: "帮助深入理解文本的内在含义",
-    icon: "🧠",
-    options: [
-      { label: "提问", value: "ask_question", description: "向AI提问关于选中文字的任何问题" },
-      { label: "总结摘要", value: "summarize", description: "快速提炼长篇译文的核心要点" },
-      { label: "解释关键术语", value: "explain_terms", description: "解释专有名词、行业术语或俚语" },
-      { label: "提取关键信息", value: "extract_info", description: "识别并提取人名、地名、日期、数据等关键信息" },
-    ]
-  }
-]
+// AI助手功能分类选项 - 已移除，使用新的6个核心功能
+export const aiAssistantCategories = []
 
 // 默认协作者
 export const defaultCollaborators = [

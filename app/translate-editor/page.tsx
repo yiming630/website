@@ -62,10 +62,16 @@ export default function TranslateEditorPage() {
     setShowAttachMenu,
     expandedCategories,
     mentionedItems,
+    textActionGroups,
+    currentTextId,
     sendMessage,
     addActionToMentions,
     addTextToMentions,
     removeMention,
+    removeActionFromGroup,
+    selectTextGroup,
+    updateGroupCustomInstruction,
+    updateActionCustomInstruction,
     toggleCategoryExpanded,
     toggleEnhancedOption,
   } = useAIChat()
@@ -75,6 +81,7 @@ export default function TranslateEditorPage() {
     showFloatingButton,
     floatingButtonPosition,
     clearSelection,
+    hideFloatingButton,
   } = useTextSelection()
   
   // 引用
@@ -82,7 +89,7 @@ export default function TranslateEditorPage() {
   
   // 初始化状态
   const [isInitialized, setIsInitialized] = useState(false)
-  
+
   // 计算字数和字符数
   const wordCount = editableContent.trim().split(/\s+/).length
   const charCount = editableContent.length
@@ -97,7 +104,7 @@ export default function TranslateEditorPage() {
   const addSelectedTextToMentions = () => {
     if (selectedText) {
       addTextToMentions(selectedText)
-      clearSelection()
+      hideFloatingButton() // 只隐藏浮动按钮，不清除选中状态
     }
   }
   
@@ -221,7 +228,7 @@ export default function TranslateEditorPage() {
       />
 
       {/* 导航栏 */}
-      <div className="bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200 px-6 py-1.5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/preview" className="text-gray-600 hover:text-gray-900">
@@ -236,15 +243,15 @@ export default function TranslateEditorPage() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/workspace" className="text-gray-600">
-              <FileIcon className="h-4 w-4 mr-2" />
-              返回工作台
-            </Link>
-          </Button>
-          <span className="text-sm text-gray-600">AI驱动译文编辑器</span>
-        </div>
+                  <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/workspace" className="text-gray-600">
+                <FileIcon className="h-4 w-4 mr-2" />
+                返回工作台
+              </Link>
+            </Button>
+            <span className="text-sm text-gray-600">AI驱动译文编辑器</span>
+          </div>
       </div>
 
       {/* 标尺 */}
@@ -262,8 +269,8 @@ export default function TranslateEditorPage() {
         </div>
       )}
 
-      {/* 主要内容区域 - 左右分栏布局 */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* 主要内容区域 - 左右分栏布局 - 最大化高度利用 */}
+      <div className="flex overflow-hidden" style={{ height: 'calc(130vh - 160px)' }}>
         {/* 左侧编辑器区域 - 70% */}
         <EditorSection
           editableContent={editableContent}
@@ -280,7 +287,7 @@ export default function TranslateEditorPage() {
           onToggleOriginal={handleToggleOriginalView}
           onTogglePanelPin={togglePanelPin}
           onEditorScroll={handleEditorScroll}
-          onFormatStateChange={setFormatState}
+                onFormatStateChange={setFormatState}
           onSaveStatusChange={setSaveStatus}
         />
 
@@ -289,6 +296,8 @@ export default function TranslateEditorPage() {
           chatMessages={chatMessages}
           inputValue={inputValue}
           mentionedItems={mentionedItems}
+          textActionGroups={textActionGroups}
+          currentTextId={currentTextId}
           selectedEnhancedOptions={selectedEnhancedOptions}
           showAttachMenu={showAttachMenu}
           expandedCategories={expandedCategories}
@@ -298,7 +307,11 @@ export default function TranslateEditorPage() {
           onToggleAttachMenu={() => setShowAttachMenu(!showAttachMenu)}
           onToggleCategoryExpanded={toggleCategoryExpanded}
           onRemoveMention={removeMention}
+          onRemoveActionFromGroup={removeActionFromGroup}
+          onSelectTextGroup={selectTextGroup}
           onAddActionToMentions={addActionToMentions}
+          onUpdateGroupCustomInstruction={updateGroupCustomInstruction}
+          onUpdateActionCustomInstruction={updateActionCustomInstruction}
         />
       </div>
       
@@ -340,28 +353,85 @@ export default function TranslateEditorPage() {
       
       {/* 添加高亮动画样式 */}
       <style jsx global>{`
+        /* 禁止非编辑器区域的文本选择 */
+        * {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        
+        /* 只允许编辑器内容可选择 */
+        .editor-content,
+        .editor-content *,
+        .editor-text-area,
+        .editor-text-area *,
+        .ProseMirror,
+        .ProseMirror * {
+          -webkit-user-select: text;
+          -moz-user-select: text;
+          -ms-user-select: text;
+          user-select: text;
+        }
+        
+        /* 输入框和文本区域也应该可选择 */
+        input,
+        textarea {
+          -webkit-user-select: text;
+          -moz-user-select: text;
+          -ms-user-select: text;
+          user-select: text;
+        }
+        
         /* 自定义滚动条样式 */
         .scrollbar-thin {
           scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 #f1f5f9;
         }
         
         .scrollbar-thin::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
+          width: 10px;
+          height: 10px;
         }
         
         .scrollbar-thin::-webkit-scrollbar-track {
-          background: #f3f4f6;
-          border-radius: 4px;
+          background: #f1f5f9;
+          border-radius: 6px;
+          margin: 4px;
         }
         
         .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #d1d5db;
-          border-radius: 4px;
+          background: #cbd5e1;
+          border-radius: 6px;
+          border: 2px solid #f1f5f9;
+          background-clip: padding-box;
         }
         
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: #9ca3af;
+          background: #94a3b8;
+          border: 2px solid #f1f5f9;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb:active {
+          background: #64748b;
+          border: 2px solid #f1f5f9;
+        }
+        
+        /* 为编辑器区域的滚动条添加特殊样式 */
+        .editor-content::-webkit-scrollbar,
+        .ProseMirror::-webkit-scrollbar {
+          width: 10px;
+        }
+        
+        .editor-content::-webkit-scrollbar-track,
+        .ProseMirror::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .editor-content::-webkit-scrollbar-thumb,
+        .ProseMirror::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 6px;
         }
         
         /* 淡入动画 */
@@ -378,6 +448,21 @@ export default function TranslateEditorPage() {
         
         .animate-fade-in {
           animation: fade-in 0.2s ease-out;
+        }
+        
+        /* 选中文本高亮 - 只在编辑器内有效 */
+        .editor-content ::selection,
+        .editor-text-area ::selection,
+        .ProseMirror ::selection {
+          background-color: #fef3c7;
+          color: #000;
+        }
+        
+        .editor-content ::-moz-selection,
+        .editor-text-area ::-moz-selection,
+        .ProseMirror ::-moz-selection {
+          background-color: #fef3c7;
+          color: #000;
         }
         
         /* 高亮动画 */

@@ -75,6 +75,11 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
     // 初始化TipTap编辑器
     const editor = useEditor({
       immediatelyRender: false,
+      editorProps: {
+        attributes: {
+          class: 'prose prose-lg max-w-none p-8 min-h-[calc(130vh-364px)] overflow-y-auto focus:outline-none editor-text-area scrollbar-thin',
+        },
+      },
       extensions: [
         StarterKit.configure({
           heading: {
@@ -110,7 +115,7 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
       content,
       editorProps: {
         attributes: {
-          class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none focus:outline-none min-h-[600px] px-12 py-8',
+          class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none focus:outline-none min-h-[780px] px-12 py-8',
         },
       },
       onUpdate: ({ editor }) => {
@@ -229,7 +234,7 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
             {/* 编辑器内容 */}
             <EditorContent 
               editor={editor} 
-              className="relative"
+              className="relative editor-content"
               onClick={onClick}
             />
           </div>

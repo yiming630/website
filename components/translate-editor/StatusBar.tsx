@@ -54,7 +54,7 @@ export function StatusBar({
   const zoomPresets = [50, 75, 100, 125, 150, 200]
 
   return (
-    <div className="bg-gray-100 border-t border-gray-200 px-4 py-2 flex items-center justify-between text-sm">
+    <div className="bg-gray-100 border-t border-gray-200 px-4 py-1 flex items-center justify-between text-sm">
       {/* 左侧信息 */}
       <div className="flex items-center gap-4">
         {/* 页面信息 */}

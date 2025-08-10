@@ -136,7 +136,7 @@ export function SideBySideReviewPanel({
       </div>
 
       {/* 内容区域 */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 scrollbar-thin">
         <div ref={contentRef} className="p-6">
           {originalContent.map((sentence, index) => (
             <div

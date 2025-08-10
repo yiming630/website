@@ -214,7 +214,7 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
   onInsertLink,
 }) => {
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-2">
+    <div className="bg-white border-b border-gray-200 px-4 py-1.5">
       <div className="flex items-center gap-1 flex-wrap">
         {/* 历史记录组 */}
         <div className="flex items-center gap-1">

@@ -58,15 +58,15 @@ export const EditorSection: React.FC<EditorSectionProps> = ({
   }
 
   return (
-    <div className="flex-1 flex">
+    <div className="flex-1 flex h-full">
       {/* 主编辑区域容器 */}
       <div className={cn(
-        "flex-1 flex",
+        "flex-1 flex h-full",
         showOriginal && "pr-0"
       )}>
         {/* 译文编辑区域 - 使用EditorCanvas */}
-        <div className="flex-1 bg-gray-100 flex flex-col overflow-y-auto">
-          <div className="bg-gray-50 border-b border-gray-200" style={{ height: '73px', padding: '16px' }}>
+        <div className="flex-1 bg-gray-100 flex flex-col h-full">
+          <div className="bg-gray-50 border-b border-gray-200" style={{ height: '73px', padding: '16px', flexShrink: 0 }}>
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
               <Languages className="h-5 w-5" />
               译文编辑
@@ -76,7 +76,7 @@ export const EditorSection: React.FC<EditorSectionProps> = ({
             </p>
           </div>
           
-          <div className="flex-1 p-8 overflow-y-auto" onScroll={handleScroll}>
+          <div className="flex-1 p-8 overflow-y-auto scrollbar-thin" style={{ minHeight: 0 }} onScroll={handleScroll}>
             <EditorCanvas
               ref={editorRef}
               content={editableContent}
