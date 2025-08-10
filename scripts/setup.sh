@@ -42,7 +42,7 @@ echo "⏳ Waiting for user service to be ready..."
 sleep 5
 
 # Check user service health
-until curl -f http://localhost:$USER_SVC_PORT/health > /dev/null 2>&1; do
+until curl -f http://127.0.0.1:$USER_SVC_PORT/health > /dev/null 2>&1; do
     echo "⏳ Waiting for user service..."
     sleep 2
 done
@@ -56,7 +56,7 @@ echo "⏳ Waiting for API gateway to be ready..."
 sleep 5
 
 # Check API gateway health
-until curl -f http://localhost:$API_GATEWAY_PORT/health > /dev/null 2>&1; do
+until curl -f http://127.0.0.1:$API_GATEWAY_PORT/health > /dev/null 2>&1; do
     echo "⏳ Waiting for API gateway..."
     sleep 2
 done
@@ -70,7 +70,7 @@ echo "⏳ Waiting for frontend to be ready..."
 sleep 10
 
 # Check frontend health
-until curl -f http://localhost:3000 > /dev/null 2>&1; do
+until curl -f http://127.0.0.1:3000 > /dev/null 2>&1; do
     echo "⏳ Waiting for frontend..."
     sleep 2
 done
@@ -87,9 +87,9 @@ echo "👤 User Service: http://localhost:$USER_SVC_PORT"
 echo "🗄️ Database: localhost:$POSTGRES_PORT"
 echo ""
 echo "📊 Health Checks:"
-echo "  - Frontend: http://localhost:3000"
-echo "  - API Gateway: http://localhost:$API_GATEWAY_PORT/health"
-echo "  - User Service: http://localhost:$USER_SVC_PORT/health"
+echo "  - Frontend: http://127.0.0.1:3000"
+echo "  - API Gateway: http://127.0.0.1:$API_GATEWAY_PORT/health"
+echo "  - User Service: http://127.0.0.1:$USER_SVC_PORT/health"
 echo ""
 echo "🔧 To view logs: docker-compose logs -f [service-name]"
 echo "🛑 To stop: docker-compose down"

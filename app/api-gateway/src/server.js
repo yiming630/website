@@ -108,43 +108,52 @@ const server = new ApolloServer({
 
 // Start Apollo Server
 async function startServer() {
-  await server.start();
-  
-  // Apply middleware
-  server.applyMiddleware({ 
-    app,
-    path: '/graphql',
-    cors: {
-      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-      credentials: true
-    }
-  });
+  try {
+    console.log('🔧 Starting Apollo Server...');
+    await server.start();
+    console.log('✅ Apollo Server started successfully');
+    
+    // Apply middleware
+    console.log('🔧 Applying GraphQL middleware...');
+    server.applyMiddleware({ 
+      app,
+      path: '/graphql',
+      cors: {
+        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        credentials: true
+      }
+    });
+    console.log('✅ GraphQL middleware applied to /graphql');
 
-  // Start Express server
-  app.listen(PORT, HOST, () => {
-    console.log(`🚀 API Gateway running on http://${HOST}:${PORT}`);
-    console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
-    console.log(`🔍 GraphQL Playground: http://${HOST}:${PORT}/graphql`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  });
+    // Add error handling middleware AFTER Apollo middleware
+    app.use((err, req, res, next) => {
+      console.error(err.stack);
+      res.status(500).json({
+        error: 'Something went wrong!',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+      });
+    });
+
+    // 404 handler - MUST be last
+    app.use('*', (req, res) => {
+      res.status(404).json({
+        error: 'Route not found',
+        path: req.originalUrl
+      });
+    });
+
+    // Start Express server
+    app.listen(PORT, HOST, () => {
+      console.log(`🚀 API Gateway running on http://${HOST}:${PORT}`);
+      console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
+      console.log(`🔍 GraphQL Playground: http://${HOST}:${PORT}/graphql`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start Apollo Server:', error);
+    process.exit(1);
+  }
 }
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    error: 'Something went wrong!',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl
-  });
-});
 
 // Start the server
 startServer().catch(console.error);

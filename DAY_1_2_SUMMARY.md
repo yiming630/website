@@ -95,7 +95,7 @@ website/
 
 2. **Run the setup script**:
    ```bash
-   ./setup.sh
+   ./scripts/setup.sh
    ```
 
 3. **Or manually with Docker Compose**:
