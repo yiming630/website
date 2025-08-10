@@ -1,0 +1,228 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: translation-platform-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-translation_platform_dev}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./app/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-translation_platform_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+  # User Service (Authentication & User Management)
+  user-svc:
+    build:
+      context: ./app/user-svc
+      dockerfile: Dockerfile
+    container_name: translation-platform-user-svc
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${USER_SVC_PORT:-4001}
+      HOST: 0.0.0.0
+      # Database
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-translation_platform_dev}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      # Cookie Configuration
+      COOKIE_NAME: ${COOKIE_NAME:-translation-platform-token}
+      # CORS
+      CORS_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+    ports:
+      - "${USER_SVC_PORT:-4001}:${USER_SVC_PORT:-4001}"
+    volumes:
+      - ./app/user-svc:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${USER_SVC_PORT:-4001}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+  # API Gateway (GraphQL Apollo Server)
+  api-gateway:
+    build:
+      context: ./app/api-gateway
+      dockerfile: Dockerfile
+    container_name: translation-platform-api-gateway
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${API_GATEWAY_PORT:-4000}
+      HOST: 0.0.0.0
+      # Database
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-translation_platform_dev}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      # User Service
+      USER_SERVICE_URL: http://user-svc:${USER_SVC_PORT:-4001}
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      # CORS
+      CORS_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      # Rate Limiting
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+    ports:
+      - "${API_GATEWAY_PORT:-4000}:${API_GATEWAY_PORT:-4000}"
+    volumes:
+      - ./app/api-gateway:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      user-svc:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${API_GATEWAY_PORT:-4000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+  # Frontend (React + Apollo Client)
+  frontend:
+    build:
+      context: ./app/frontend
+      dockerfile: Dockerfile
+    container_name: translation-platform-frontend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3000
+      HOST: 0.0.0.0
+      # API Configuration
+      NEXT_PUBLIC_API_URL: http://localhost:${API_GATEWAY_PORT:-4000}
+      NEXT_PUBLIC_GRAPHQL_URL: http://localhost:${API_GATEWAY_PORT:-4000}/graphql
+      NEXT_PUBLIC_USER_SERVICE_URL: http://localhost:${USER_SVC_PORT:-4001}
+      # Client Configuration
+      NEXT_PUBLIC_CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      # Cookie Configuration
+      NEXT_PUBLIC_COOKIE_NAME: ${COOKIE_NAME:-translation-platform-token}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+      user-svc:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - translation-network
+
+  # Redis (Optional - for caching and sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: translation-platform-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - translation-network
+    profiles:
+      - cache
+
+  # Development Tools (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: translation-platform-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@translation-platform.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
+    networks:
+      - translation-network
+    profiles:
+      - dev
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: translation-platform-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - translation-network
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  translation-network:
+    driver: bridge
