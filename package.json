@@ -1,0 +1,16 @@
+{
+  "name": "seekhub-demo",
+  "version": "1.0.0",
+  "description": "SeekHub Demo Project",
+  "private": true,
+  "scripts": {
+    "dev": "cd nextjs-app && npm run dev",
+    "build": "cd nextjs-app && npm run build",
+    "start": "cd nextjs-app && npm run start",
+    "install": "cd nextjs-app && npm install --legacy-peer-deps",
+    "lint": "cd nextjs-app && npm run lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
