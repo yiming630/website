@@ -5,8 +5,6 @@ import {
   CheckCircle,
   Shield,
   HelpCircle,
-  Brain,
-  Globe,
 } from "lucide-react"
 
 // 模拟原文内容 - 分成句子数组
@@ -88,13 +86,6 @@ export const aiOptions = [
     value: "ask_question",
     description: "向AI提问关于选中文字的任何问题"
   },
-]
-
-// 增强功能选项
-export const enhancedOptions = [
-  { icon: Search, label: "数据库检索", value: "database" },
-  { icon: Brain, label: "深度思考", value: "deep" },
-  { icon: Globe, label: "联网搜索", value: "web" },
 ]
 
 // AI助手功能分类选项 - 已移除，使用新的6个核心功能

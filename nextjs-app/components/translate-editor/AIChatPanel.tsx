@@ -20,7 +20,7 @@ import {
   Edit3,
 } from 'lucide-react'
 import { ChatMessage, MentionedItem, TextActionGroup } from '@/app/translate-editor/types'
-import { aiOptions, enhancedOptions, aiAssistantCategories } from '@/app/translate-editor/constants'
+import { aiOptions, aiAssistantCategories } from '@/app/translate-editor/constants'
 import { AITutorial } from './AITutorial'
 
 interface AIChatPanelProps {
@@ -29,12 +29,10 @@ interface AIChatPanelProps {
   mentionedItems: MentionedItem[]
   textActionGroups: TextActionGroup[]
   currentTextId: string | null
-  selectedEnhancedOptions: string[]
   showAttachMenu: boolean
   expandedCategories: number[]
   onInputChange: (value: string) => void
   onSendMessage: (content?: string) => void
-  onToggleEnhancedOption: (value: string) => void
   onToggleAttachMenu: () => void
   onToggleCategoryExpanded: (index: number) => void
   onRemoveMention: (id: string) => void
@@ -51,12 +49,10 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
   mentionedItems,
   textActionGroups,
   currentTextId,
-  selectedEnhancedOptions,
   showAttachMenu,
   expandedCategories,
   onInputChange,
   onSendMessage,
-  onToggleEnhancedOption,
   onToggleAttachMenu,
   onToggleCategoryExpanded,
   onRemoveMention,
@@ -83,30 +79,29 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
     onAddActionToMentions(option.value, fullLabel)
   }
 
+  // 渲染带有可点击链接的消息内容
+  const renderMessageContent = (content: string) => {
+    // 检查是否包含 @使用教程
+    if (content.includes('@使用教程')) {
+      const parts = content.split('@使用教程')
+      return (
+        <>
+          {parts[0]}
+          <span 
+            className="text-blue-600 cursor-pointer hover:text-blue-800 hover:underline font-medium"
+            onClick={() => setShowTutorial(true)}
+          >
+            @使用教程
+          </span>
+          {parts[1]}
+        </>
+      )
+    }
+    return content
+  }
+
   return (
-    <div className="w-[30%] min-w-[400px] bg-white border-l border-gray-200 flex flex-col h-full">
-      {/* 聊天头部 - 调整高度与左侧对齐 */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white border-b border-blue-800 flex items-center justify-between" 
-           style={{ height: '73px', padding: '16px', flexShrink: 0 }}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <Bot className="h-6 w-6" />
-          </div>
-          <div>
-            <h3 className="font-semibold">AI 助手</h3>
-            <p className="text-xs text-blue-100 mt-1">随时为您提供帮助</p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-white hover:bg-white/20 flex items-center gap-2"
-          onClick={() => setShowTutorial(true)}
-        >
-          <HelpCircle className="h-4 w-4" />
-          <span className="text-sm">查看使用教程</span>
-        </Button>
-      </div>
+    <div className="w-[40%] min-w-[400px] bg-white border-l border-gray-200 flex flex-col h-full">
       
       {/* 聊天消息区域 - 添加minHeight: 0确保flex-1正常工作 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 scrollbar-thin" style={{ minHeight: 0 }}>
@@ -129,7 +124,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
                 ? "bg-blue-600 text-white" 
                 : "bg-white border border-gray-200"
             )}>
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <p className="text-sm whitespace-pre-wrap">{renderMessageContent(message.content)}</p>
               
               {/* 显示新的6个AI功能选项 */}
               {message.type === 'ai' && message.showCategories && (
@@ -169,24 +164,6 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
           </div>
         ))}
         <div ref={chatEndRef} />
-      </div>
-      
-      {/* 增强选项 */}
-      <div className="px-4 py-3 border-t border-gray-200 bg-white" style={{ flexShrink: 0 }}>
-        <div className="flex gap-2">
-          {enhancedOptions.map((option) => (
-            <Button
-              key={option.value}
-              variant={selectedEnhancedOptions.includes(option.value) ? "default" : "outline"}
-              size="sm"
-              onClick={() => onToggleEnhancedOption(option.value)}
-              className="flex-1"
-            >
-              <option.icon className="h-4 w-4 mr-1" />
-              {option.label}
-            </Button>
-          ))}
-        </div>
       </div>
       
       {/* 输入区域 */}

@@ -98,12 +98,12 @@ export function SideBySideReviewPanel({
       style={{ width: `${width}px` }}
     >
       {/* 头部 */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">原文对照</h3>
+      <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5 text-gray-600" />
+          <h3 className="text-xs font-semibold text-gray-900">原文对照</h3>
           {highlightedIndex !== null && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
               第 {highlightedIndex + 1} 句
             </span>
           )}
@@ -114,13 +114,13 @@ export function SideBySideReviewPanel({
               variant="ghost"
               size="sm"
               onClick={onTogglePin}
-              className="h-8 w-8 p-0"
+              className="h-6 w-6 p-0"
               title={isPinned ? "取消固定" : "固定面板"}
             >
               {isPinned ? (
-                <PinOff className="h-4 w-4" />
+                <PinOff className="h-3 w-3" />
               ) : (
-                <Pin className="h-4 w-4" />
+                <Pin className="h-3 w-3" />
               )}
             </Button>
           )}
@@ -130,7 +130,7 @@ export function SideBySideReviewPanel({
             onClick={onClose}
             className="h-8 w-8 p-0"
           >
-            <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
           </Button>
         </div>
       </div>

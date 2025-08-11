@@ -13,7 +13,11 @@ import {
   FileDown,
   FileText,
   Users,
+  Mountain,
+  ArrowLeft,
+  FileIcon,
 } from 'lucide-react'
+import Link from 'next/link'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,7 +79,7 @@ const DocumentTitle: React.FC<{
             handleCancel()
           }
         }}
-        className="text-lg font-semibold max-w-xs"
+        className="text-sm font-semibold max-w-xs"
         autoFocus
       />
     )
@@ -83,7 +87,8 @@ const DocumentTitle: React.FC<{
 
   return (
     <h1
-      className="text-lg font-semibold cursor-text hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+      className="font-semibold cursor-text hover:bg-gray-100 px-1.5 py-0.5 rounded transition-colors"
+      style={{fontSize: '14px'}}
       onClick={() => setIsEditing(true)}
       title="点击编辑文档标题"
     >
@@ -115,7 +120,7 @@ const CollaborationAvatars: React.FC<{
           {collaborators.slice(0, 3).map((user) => (
             <Tooltip key={user.id}>
               <TooltipTrigger asChild>
-                <Avatar className="h-8 w-8 border-2 border-white">
+                <Avatar className="h-5 w-5 border border-white">
                   <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback className="text-xs">
                     {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
@@ -133,7 +138,7 @@ const CollaborationAvatars: React.FC<{
           {collaborators.length > 3 && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="h-8 w-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full bg-gray-200 border border-white flex items-center justify-center">
                   <span className="text-xs font-medium text-gray-600">
                     +{collaborators.length - 3}
                   </span>
@@ -159,9 +164,9 @@ const ShareButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
       variant="outline"
       size="sm"
       onClick={onClick}
-      className="gap-2"
+      className="h-7 px-2 gap-1 text-xs"
     >
-      <Share2 className="h-4 w-4" />
+      <Share2 className="h-3.5 w-3.5" />
       分享
     </Button>
   )
@@ -176,8 +181,8 @@ const ExportButton: React.FC<{
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Download className="h-4 w-4" />
+        <Button variant="outline" size="sm" className="h-7 px-2 gap-1 text-xs">
+          <Download className="h-3.5 w-3.5" />
           导出
         </Button>
       </DropdownMenuTrigger>
@@ -230,10 +235,10 @@ const SaveStatus: React.FC<{
   return (
     <div className="flex items-center gap-3">
       <div
-        className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${config.bgColor} ${config.color}`}
+        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] ${config.bgColor} ${config.color}`}
       >
         <Icon
-          className={`h-4 w-4 ${config.animate ? 'animate-spin' : ''}`}
+          className={`h-2.5 w-2.5 ${config.animate ? 'animate-spin' : ''}`}
         />
         <span>{config.text}</span>
       </div>
@@ -241,9 +246,9 @@ const SaveStatus: React.FC<{
         <Button
           size="sm"
           onClick={onSave}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 h-7 px-2 text-xs"
         >
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="h-3.5 w-3.5 mr-1" />
           保存
         </Button>
       )}
@@ -264,19 +269,39 @@ export const Header: React.FC<HeaderProps> = ({
   collaborators = [],
 }) => {
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-3">
+    <header className="bg-white border-b border-gray-200 px-4" style={{paddingTop: '4px', paddingBottom: '4px', minHeight: '42px'}}>
       <div className="flex items-center justify-between">
-        {/* 左侧 - 文档标题和协作者 */}
-        <div className="flex items-center gap-6">
+        {/* 左侧 - Logo、导航和文档标题 */}
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-1.5">
+            <Mountain className="h-5 w-5 text-blue-600" />
+            <span className="font-semibold text-gray-900" style={{fontSize: '16px'}}>格式译专家</span>
+          </Link>
+          <div className="h-5 w-px bg-gray-300" />
+          <Button variant="ghost" size="sm" asChild className="h-7 px-2">
+            <Link href="/preview" className="text-gray-600 hover:text-gray-900" style={{fontSize: '14px'}}>
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              预览
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="h-7 px-2">
+            <Link href="/workspace" className="text-gray-600 hover:text-gray-900" style={{fontSize: '14px'}}>
+              <FileIcon className="h-3.5 w-3.5 mr-1" />
+              工作台
+            </Link>
+          </Button>
+          <div className="h-5 w-px bg-gray-300" />
           <DocumentTitle title={documentTitle} onChange={onTitleChange} />
           <CollaborationAvatars collaborators={collaborators} />
         </div>
 
         {/* 右侧 - 操作按钮和保存状态 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500" style={{fontSize: '14px'}}>AI驱动译文编辑器</span>
+          <div className="h-5 w-px bg-gray-300" />
           <ShareButton onClick={onShare} />
           <ExportButton onExport={onExport} />
-          <div className="h-6 w-px bg-gray-300" />
+          <div className="h-5 w-px bg-gray-300" />
           <SaveStatus status={saveStatus} onSave={onSave} />
         </div>
       </div>

@@ -1,12 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { AtSign, Mountain, ArrowLeft, FileIcon } from "lucide-react"
-import Link from "next/link"
+import { AtSign } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { Header } from "@/components/translate-editor/Header"
 import { MainToolbar } from "@/components/translate-editor/MainToolbar"
-import { FormattingToolbar } from "@/components/translate-editor/FormattingToolbar"
 import { EditorCanvas, EditorCanvasRef } from "@/components/translate-editor/EditorCanvas"
 import { StatusBar } from "@/components/translate-editor/StatusBar"
 import { AIChatPanel } from "@/components/translate-editor/AIChatPanel"
@@ -57,7 +55,6 @@ export default function TranslateEditorPage() {
     chatMessages,
     inputValue,
     setInputValue,
-    selectedEnhancedOptions,
     showAttachMenu,
     setShowAttachMenu,
     expandedCategories,
@@ -73,7 +70,6 @@ export default function TranslateEditorPage() {
     updateGroupCustomInstruction,
     updateActionCustomInstruction,
     toggleCategoryExpanded,
-    toggleEnhancedOption,
   } = useAIChat()
 
   const {
@@ -150,9 +146,14 @@ export default function TranslateEditorPage() {
   const handleLineHeight = (height: string) => setFormatState(prev => ({ ...prev, lineHeight: height }))
   const togglePanelPin = () => setIsPanelPinned(!isPanelPinned)
   const handleEditorScroll = (progress: number) => setEditorScrollProgress(progress)
+  const handleViewHistory = () => console.log('View chat history')
+  const handleNewConversation = () => {
+    // 清空聊天记录，开始新对话
+    console.log('Start new conversation')
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* 顶部头部栏 */}
       <Header
         documentTitle={documentTitle}
@@ -164,7 +165,7 @@ export default function TranslateEditorPage() {
         collaborators={defaultCollaborators}
       />
 
-      {/* 主菜单栏 */}
+      {/* 主菜单栏和格式化工具栏 */}
       <MainToolbar
         onNewDocument={handleNewDocument}
         onOpenDocument={handleOpenDocument}
@@ -188,12 +189,7 @@ export default function TranslateEditorPage() {
         onFormatStyles={handleFormatStyles}
         showRuler={showRuler}
         showOriginal={showOriginal}
-      />
-
-      {/* 格式化工具栏 */}
-      <FormattingToolbar
-        onUndo={handleUndo}
-        onRedo={handleRedo}
+        // 格式化状态和操作
         canUndo={editorRef.current?.canUndo() || false}
         canRedo={editorRef.current?.canRedo() || false}
         isBold={formatState.isBold}
@@ -222,46 +218,20 @@ export default function TranslateEditorPage() {
         onIndent={handleIndent}
         onOutdent={handleOutdent}
         onLineHeight={handleLineHeight}
-        onInsertTable={handleInsertTable}
-        onInsertImage={handleInsertImage}
-        onInsertLink={handleInsertLink}
+        onViewHistory={handleViewHistory}
+        onNewConversation={handleNewConversation}
       />
 
-      {/* 导航栏 */}
-      <div className="bg-white border-b border-gray-200 px-6 py-1.5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/preview" className="text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              返回预览
-            </Link>
-          </Button>
-          <div className="h-6 w-px bg-gray-300"></div>
-          <Link href="/" className="flex items-center gap-2">
-            <Mountain className="h-6 w-6 text-blue-600" />
-            <span className="font-semibold text-gray-900">格式译专家</span>
-          </Link>
-        </div>
 
-                  <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/workspace" className="text-gray-600">
-                <FileIcon className="h-4 w-4 mr-2" />
-                返回工作台
-              </Link>
-            </Button>
-            <span className="text-sm text-gray-600">AI驱动译文编辑器</span>
-          </div>
-      </div>
 
       {/* 标尺 */}
       {showRuler && (
-        <div className="bg-gray-100 border-b border-gray-300 h-8 flex items-center px-6">
+        <div className="bg-gray-100 border-b border-gray-300 h-6 flex items-center px-6">
           <div className="flex items-center w-full relative">
             <div className="absolute inset-0 flex">
               {Array.from({ length: 20 }, (_, i) => (
                 <div key={i} className="flex-1 border-r border-gray-400 relative">
-                  <span className="absolute top-0 left-0 text-xs text-gray-600 pl-1">{i}</span>
+                  <span className="absolute top-0 left-0 text-[10px] text-gray-600 pl-0.5">{i}</span>
                 </div>
               ))}
             </div>
@@ -270,8 +240,8 @@ export default function TranslateEditorPage() {
       )}
 
       {/* 主要内容区域 - 左右分栏布局 - 最大化高度利用 */}
-      <div className="flex overflow-hidden" style={{ height: 'calc(130vh - 160px)' }}>
-        {/* 左侧编辑器区域 - 70% */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左侧编辑器区域 - 60% */}
         <EditorSection
           editableContent={editableContent}
           showOriginal={showOriginal}
@@ -291,19 +261,17 @@ export default function TranslateEditorPage() {
           onSaveStatusChange={setSaveStatus}
         />
 
-        {/* 右侧AI聊天区域 - 30% */}
+        {/* 右侧AI聊天区域 - 40% */}
         <AIChatPanel
           chatMessages={chatMessages}
           inputValue={inputValue}
           mentionedItems={mentionedItems}
           textActionGroups={textActionGroups}
           currentTextId={currentTextId}
-          selectedEnhancedOptions={selectedEnhancedOptions}
           showAttachMenu={showAttachMenu}
           expandedCategories={expandedCategories}
           onInputChange={setInputValue}
           onSendMessage={sendMessage}
-          onToggleEnhancedOption={toggleEnhancedOption}
           onToggleAttachMenu={() => setShowAttachMenu(!showAttachMenu)}
           onToggleCategoryExpanded={toggleCategoryExpanded}
           onRemoveMention={removeMention}

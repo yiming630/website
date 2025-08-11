@@ -149,8 +149,8 @@ const ColorPicker: React.FC<{
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 px-2" title={title}>
-          <Icon className="h-4 w-4" />
+        <Button variant="ghost" size="sm" className="h-7 px-2" title={title}>
+          <Icon className="h-3.5 w-3.5" />
           <div
             className="w-4 h-1 ml-1 border border-gray-300"
             style={{ backgroundColor: color }}
@@ -214,7 +214,7 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
   onInsertLink,
 }) => {
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-1.5">
+    <div className="bg-white border-b border-gray-200 px-4 py-0.5">
       <div className="flex items-center gap-1 flex-wrap">
         {/* 历史记录组 */}
         <div className="flex items-center gap-1">
@@ -223,20 +223,20 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             size="sm"
             onClick={onUndo}
             disabled={!canUndo}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="撤销 (Ctrl+Z)"
           >
-            <Undo className="h-4 w-4" />
+            <Undo className="h-3.5 w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={onRedo}
             disabled={!canRedo}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="重做 (Ctrl+Y)"
           >
-            <Redo className="h-4 w-4" />
+            <Redo className="h-3.5 w-3.5" />
           </Button>
         </div>
 
@@ -244,7 +244,7 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
 
         {/* 字体选择 */}
         <Select value={fontFamily} onValueChange={onFontFamily}>
-          <SelectTrigger className="h-8 w-32">
+          <SelectTrigger className="h-7 w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -258,7 +258,7 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
 
         {/* 字号选择 */}
         <Select value={fontSize} onValueChange={onFontSize}>
-          <SelectTrigger className="h-8 w-16">
+          <SelectTrigger className="h-7 w-16">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -278,37 +278,37 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             size="sm"
             pressed={isBold}
             onPressedChange={onBold}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="加粗 (Ctrl+B)"
           >
-            <Bold className="h-4 w-4" />
+            <Bold className="h-3.5 w-3.5" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={isItalic}
             onPressedChange={onItalic}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="斜体 (Ctrl+I)"
           >
-            <Italic className="h-4 w-4" />
+            <Italic className="h-3.5 w-3.5" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={isUnderline}
             onPressedChange={onUnderline}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="下划线 (Ctrl+U)"
           >
-            <Underline className="h-4 w-4" />
+            <Underline className="h-3.5 w-3.5" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={isStrikethrough}
             onPressedChange={onStrikethrough}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="删除线"
           >
-            <Minus className="h-4 w-4" />
+            <Minus className="h-3.5 w-3.5" />
           </Toggle>
           
           {/* 文字颜色 */}
@@ -337,37 +337,37 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             size="sm"
             pressed={alignment === 'left'}
             onPressedChange={() => onAlign('left')}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="左对齐"
           >
-            <AlignLeft className="h-4 w-4" />
+            <AlignLeft className="h-3.5 w-3.5" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={alignment === 'center'}
             onPressedChange={() => onAlign('center')}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="居中对齐"
           >
-            <AlignCenter className="h-4 w-4" />
+            <AlignCenter className="h-3.5 w-3.5" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={alignment === 'right'}
             onPressedChange={() => onAlign('right')}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="右对齐"
           >
-            <AlignRight className="h-4 w-4" />
+            <AlignRight className="h-3.5 w-3.5" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={alignment === 'justify'}
             onPressedChange={() => onAlign('justify')}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="两端对齐"
           >
-            <AlignJustify className="h-4 w-4" />
+            <AlignJustify className="h-3.5 w-3.5" />
           </Toggle>
           
           {/* 列表 */}
@@ -375,19 +375,19 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             size="sm"
             pressed={isBulletList}
             onPressedChange={onBulletList}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="项目符号列表"
           >
-            <List className="h-4 w-4" />
+            <List className="h-3.5 w-3.5" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={isNumberedList}
             onPressedChange={onNumberedList}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="编号列表"
           >
-            <ListOrdered className="h-4 w-4" />
+            <ListOrdered className="h-3.5 w-3.5" />
           </Toggle>
           
           {/* 缩进 */}
@@ -395,26 +395,26 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             variant="ghost"
             size="sm"
             onClick={onOutdent}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="减少缩进"
           >
-            <Outdent className="h-4 w-4" />
+            <Outdent className="h-3.5 w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={onIndent}
-            className="h-8 w-8 p-0"
+            className="h-7 w-8 p-0"
             title="增加缩进"
           >
-            <Indent className="h-4 w-4" />
+            <Indent className="h-3.5 w-3.5" />
           </Button>
           
           {/* 行间距 */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 px-2" title="行间距">
-                <AlignJustify className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="h-7 px-2" title="行间距">
+                <AlignJustify className="h-3.5 w-3.5" />
                 <ChevronDown className="h-3 w-3 ml-1" />
               </Button>
             </DropdownMenuTrigger>
@@ -439,29 +439,29 @@ export const FormattingToolbar: React.FC<FormattingToolbarProps> = ({
             variant="ghost"
             size="sm"
             onClick={onInsertTable}
-            className="h-8 px-2"
+            className="h-7 px-2"
             title="插入表格"
           >
-            <Table className="h-4 w-4" />
+            <Table className="h-3.5 w-3.5" />
             <ChevronDown className="h-3 w-3 ml-1" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={onInsertImage}
-            className="h-8 px-2"
+            className="h-7 px-2"
             title="插入图片"
           >
-            <Image className="h-4 w-4" />
+            <Image className="h-3.5 w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={onInsertLink}
-            className="h-8 px-2"
+            className="h-7 px-2"
             title="插入链接"
           >
-            <Link className="h-4 w-4" />
+            <Link className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>

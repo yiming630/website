@@ -4,7 +4,6 @@ import { ChatMessage, MentionedItem, TextActionGroup } from '../types'
 export const useAIChat = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
-  const [selectedEnhancedOptions, setSelectedEnhancedOptions] = useState<string[]>([])
   const [showAttachMenu, setShowAttachMenu] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<number[]>([0, 1, 2])
   const [mentionedItems, setMentionedItems] = useState<MentionedItem[]>([])
@@ -17,7 +16,7 @@ export const useAIChat = () => {
       setChatMessages([{
         id: Date.now().toString(),
         type: 'ai',
-        content: '您好！我是您的AI翻译助手。\n\n请选中需要处理的文字，然后选择以下功能之一，或直接输入您的需求：',
+        content: '您好！我是您的AI翻译助手。\n\n请选中需要处理的文字，然后选择以下功能之一，或直接输入您的需求：\n\n@使用教程，点击文字即可进入教程。',
         timestamp: new Date(),
         showCategories: true
       }])
@@ -262,22 +261,10 @@ export const useAIChat = () => {
     )
   }
 
-  /**
-   * 切换增强选项
-   */
-  const toggleEnhancedOption = (value: string) => {
-    setSelectedEnhancedOptions(prev => 
-      prev.includes(value) 
-        ? prev.filter(v => v !== value)
-        : [...prev, value]
-    )
-  }
-
   return {
     chatMessages,
     inputValue,
     setInputValue,
-    selectedEnhancedOptions,
     showAttachMenu,
     setShowAttachMenu,
     expandedCategories,
@@ -293,6 +280,5 @@ export const useAIChat = () => {
     updateGroupCustomInstruction,
     updateActionCustomInstruction,
     toggleCategoryExpanded,
-    toggleEnhancedOption,
   }
 }
