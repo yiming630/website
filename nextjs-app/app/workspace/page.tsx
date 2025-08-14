@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Mountain,
@@ -202,7 +203,7 @@ export default function WorkspacePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 翻译流程状态
-  const [pageState, setPageState] = useState("configuring") // configuring | translating | completed
+  const [pageState, setPageState] = useState("upload") // upload | reading | configuring | translating | completed
   const [translationProgress, setTranslationProgress] = useState(0)
   const [translationStatus, setTranslationStatus] = useState("")
   const [currentStepIndex, setCurrentStepIndex] = useState(0) // 当前步骤索引
@@ -214,7 +215,7 @@ export default function WorkspacePage() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null)
   const [showSubCategories, setShowSubCategories] = useState(false)
   const [sourceLanguage, setSourceLanguage] = useState("auto")
-  const [targetLanguage, setTargetLanguage] = useState("zh-cn")
+  const [targetLanguage, setTargetLanguage] = useState("")
   const [outputFormat, setOutputFormat] = useState("docx")
   const [translationStyle, setTranslationStyle] = useState("general")
 
@@ -255,7 +256,7 @@ export default function WorkspacePage() {
 
   // 根据当前状态决定中央面板显示内容
   useEffect(() => {
-    if (file && pageState === "configuring") {
+    if (pageState === "upload" || pageState === "reading" || (file && pageState === "configuring")) {
       setCenterState("new-translation")
     } else if (selectedTask) {
       setCenterState("task-detail")
@@ -290,7 +291,7 @@ export default function WorkspacePage() {
     setError(null)
     setFile(selectedFile)
     setContextFile(selectedFile)
-    setPageState("configuring")
+    setPageState("reading")
     setTranslationProgress(0)
     setSelectedMajorCategory(null)
     setSelectedSubCategory(null)
@@ -299,6 +300,11 @@ export default function WorkspacePage() {
     setShowFeedbackInput(false)
     setSelectedTask(null)
     setConversionCompleted(false)
+
+    // 模拟文档读取过程，2秒后进入配置页面
+    setTimeout(() => {
+      setPageState("configuring")
+    }, 2000)
   }
 
   // 文件输入事件处理
@@ -328,11 +334,8 @@ export default function WorkspacePage() {
    * 验证配置并启动翻译流程
    */
   const handleStartTranslation = () => {
-    // 专业译者模式 - 需要选择领域
-    if (!selectedSubCategory) {
-      alert("请选择一个细分翻译领域！")
-      return
-    }
+    // 如果目标语言为空，使用默认值（英文）
+    const finalTargetLanguage = targetLanguage.trim() || "英文"
     router.push("/translating")
   }
 
@@ -345,7 +348,7 @@ export default function WorkspacePage() {
   const resetAll = () => {
     setFile(null)
     setContextFile(null)
-    setPageState("configuring")
+    setPageState("upload")
     setTranslationProgress(0)
     setSelectedMajorCategory(null)
     setSelectedSubCategory(null)
@@ -356,6 +359,7 @@ export default function WorkspacePage() {
     setSelectedTask(null)
     setCurrentStepIndex(0)
     setConversionCompleted(false)
+    setTargetLanguage("")
   }
 
   /**
@@ -1002,6 +1006,88 @@ export default function WorkspacePage() {
 
       case "new-translation":
         // 新翻译配置页面
+        if (pageState === "upload") {
+          // 文件上传页面
+          return (
+            <div className="p-6 h-full overflow-y-auto">
+              <div className="max-w-4xl mx-auto">
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-4">上传文档</h1>
+                  <p className="text-lg text-gray-600">请选择需要翻译的文档文件</p>
+                </div>
+
+                {/* 文件上传区域 */}
+                <div className="mb-8">
+                  <div
+                    className="relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition-colors group"
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    <UploadCloud className="w-16 h-16 text-blue-400 mb-4 group-hover:text-blue-500 transition-colors" />
+                    <p className="text-xl font-semibold text-blue-700 mb-2">拖拽文件到此处，或点击上传</p>
+                    <p className="text-sm text-blue-500">支持 PDF, DOCX, EPUB, TXT, MOBI, AZW 格式</p>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept={supportedMimeTypes.join(",")}
+                    />
+                  </div>
+                  {error && (
+                    <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded-lg">
+                      <p className="text-red-700 text-center">{error}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        if (pageState === "reading") {
+          // 文档读取页面
+          return (
+            <div className="p-6 h-full overflow-y-auto">
+              <div className="max-w-4xl mx-auto">
+                <div className="text-center">
+                  <div className="mb-8">
+                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <FileIcon className="w-10 h-10 text-blue-600 animate-bounce" />
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">文档信息读取中</h1>
+                    <p className="text-lg text-gray-600 mb-6">正在分析文档结构和内容，请稍等...</p>
+                    
+                    {/* 加载动画 */}
+                    <div className="flex justify-center mb-6">
+                      <div className="flex space-x-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
+                    </div>
+
+                    {/* 文件信息 */}
+                    {file && (
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 inline-block">
+                        <div className="flex items-center gap-3">
+                          <FileIcon className="h-6 w-6 text-blue-500" />
+                          <div>
+                            <p className="font-semibold text-gray-900">{file.name}</p>
+                            <p className="text-sm text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+        
+        // 配置页面 (文件已上传)
         return (
           <div className="p-6 h-full overflow-y-auto">
             <div className="max-w-4xl mx-auto">
@@ -1029,145 +1115,36 @@ export default function WorkspacePage() {
               )}
 
               <div className="space-y-8">
-                {/* 语言选择 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 语言和领域信息 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className="text-lg font-medium text-gray-900 flex items-center gap-2">
                       <Languages className="w-5 h-5" /> 源语言
                     </label>
-                    <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
-                      <SelectTrigger className="w-full bg-white text-black border-gray-300 rounded-md h-12 text-base">
-                        <SelectValue placeholder="选择语言" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">自动检测</SelectItem>
-                        <SelectItem value="en">英语</SelectItem>
-                        <SelectItem value="zh-cn">简体中文</SelectItem>
-                        <SelectItem value="zh-tw">繁体中文</SelectItem>
-                        <SelectItem value="ja">日语</SelectItem>
-                        <SelectItem value="ko">韩语</SelectItem>
-                        <SelectItem value="fr">法语</SelectItem>
-                        <SelectItem value="de">德语</SelectItem>
-                        <SelectItem value="es">西班牙语</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="w-full bg-gray-50 border border-gray-300 rounded-md h-12 flex items-center px-3 text-gray-500">
+                      自动检测
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-lg font-medium text-gray-900 flex items-center gap-2">
                       <Languages className="w-5 h-5" /> 目标语言
                     </label>
-                    <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-                      <SelectTrigger className="w-full bg-white text-black border-gray-300 rounded-md h-12 text-base">
-                        <SelectValue placeholder="选择语言" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="zh-cn">简体中文</SelectItem>
-                        <SelectItem value="en">英语</SelectItem>
-                        <SelectItem value="zh-tw">繁体中文</SelectItem>
-                        <SelectItem value="ja">日语</SelectItem>
-                        <SelectItem value="ko">韩语</SelectItem>
-                        <SelectItem value="fr">法语</SelectItem>
-                        <SelectItem value="de">德语</SelectItem>
-                        <SelectItem value="es">西班牙语</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <input
+                      type="text"
+                      value={targetLanguage}
+                      onChange={(e) => setTargetLanguage(e.target.value)}
+                      placeholder="请输入目标语言（留空默认为英文）"
+                      className="w-full bg-white border border-gray-300 rounded-md h-12 px-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
-                </div>
-
-                {/* 翻译风格选择 */}
-                <div className="space-y-4">
-                  <label className="text-lg font-medium text-gray-900">翻译风格</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {translationStyles.map((style) => (
-                      <Card
-                        key={style.key}
-                        className={cn(
-                          "p-4 cursor-pointer transition-all duration-300 bg-white border-gray-200 hover:bg-gray-50 hover:shadow-md",
-                          translationStyle === style.key ? "ring-2 ring-blue-500 shadow-md" : "",
-                        )}
-                        onClick={() => setTranslationStyle(style.key)}
-                      >
-                        <p className="font-semibold text-gray-900">{style.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{style.description}</p>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 专业领域选择 */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">选择翻译领域</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    {specializations.map((major) => (
-                      <Card
-                        key={major.key}
-                        className={cn(
-                          "p-4 text-center cursor-pointer transition-all duration-300 bg-white hover:shadow-md hover:-translate-y-1 group",
-                          selectedMajorCategory === major.key
-                            ? "ring-2 ring-blue-500 shadow-md -translate-y-1"
-                            : "ring-1 ring-gray-200",
-                        )}
-                        onClick={() => handleMajorCategorySelect(major.key)}
-                      >
-                        <major.icon
-                          className={cn(
-                            "h-8 w-8 mx-auto mb-3 text-gray-400 transition-colors duration-300",
-                            selectedMajorCategory === major.key ? "text-blue-500" : "group-hover:text-gray-600",
-                          )}
-                        />
-                        <p
-                          className={cn(
-                            "font-medium text-gray-600 transition-colors duration-300 text-sm",
-                            selectedMajorCategory === major.key ? "text-gray-900" : "group-hover:text-gray-800",
-                          )}
-                        >
-                          {major.title}
-                        </p>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* 子类别选择 */}
-                  {showSubCategories && (
-                    <div className="animate-in fade-in-50 duration-500">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">选择细分领域</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {specializations
-                          .find((s) => s.key === selectedMajorCategory)
-                          ?.subCategories.map((sub) => (
-                            <Card
-                              key={sub.key}
-                              className={cn(
-                                "p-4 cursor-pointer transition-all duration-300 bg-white border-gray-200 hover:bg-gray-50 hover:shadow-md",
-                                selectedSubCategory === sub.key ? "ring-2 ring-blue-500 shadow-md" : "",
-                              )}
-                              onClick={() => setSelectedSubCategory(sub.key)}
-                            >
-                              <p className="font-semibold text-gray-900">{sub.title}</p>
-                              <p className="text-xs text-gray-500 mt-1">{sub.description}</p>
-                            </Card>
-                          ))}
-                      </div>
+                  <div className="space-y-2">
+                    <label className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                      <Target className="w-5 h-5" /> 翻译领域
+                    </label>
+                    <div className="w-full bg-gray-50 border border-gray-300 rounded-md h-12 flex items-center px-3 text-gray-500">
+                      待确定
                     </div>
-                  )}
-                </div>
-
-                {/* 输出格式选择 */}
-                <div className="space-y-2">
-                  <label className="text-lg font-medium text-gray-900">输出格式</label>
-                  <Select value={outputFormat} onValueChange={setOutputFormat}>
-                    <SelectTrigger className="w-full bg-white text-black border-gray-300 rounded-md h-12 text-base">
-                      <SelectValue placeholder="选择格式" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="docx">Word (.docx)</SelectItem>
-                      <SelectItem value="pdf">PDF</SelectItem>
-                      <SelectItem value="epub">EPUB</SelectItem>
-                      <SelectItem value="mobi">MOBI</SelectItem>
-                      <SelectItem value="azw">AZW</SelectItem>
-                      <SelectItem value="txt">Text (.txt)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  </div>
                 </div>
 
                 {/* 开始翻译按钮 */}
@@ -1176,7 +1153,6 @@ export default function WorkspacePage() {
                     size="lg"
                     onClick={handleStartTranslation}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105"
-                    disabled={!selectedSubCategory}
                   >
                     <Wand2 className="mr-2 h-5 w-5" />
                     开始翻译
