@@ -1032,7 +1032,7 @@ export default function TranslateEditorPage() {
         saveStatus={saveStatus}
       />
       
-      {/* 浮动按钮 - 添加到聊天 */}
+      {/* 浮动按钮 - 选中文字 */}
       {showFloatingButton && (
         <div
           className="fixed z-50 animate-fade-in"
@@ -1048,7 +1048,7 @@ export default function TranslateEditorPage() {
             className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
           >
             <AtSign className="h-3 w-3 mr-1" />
-            添加到聊天
+            选中文字
           </Button>
         </div>
       )}
