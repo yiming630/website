@@ -986,7 +986,7 @@ export default function TranslateEditorPage() {
           onToggleOriginal={handleToggleOriginalView}
           onTogglePanelPin={togglePanelPin}
           onEditorScroll={handleEditorScroll}
-          onFormatStateChange={setFormatState}
+                onFormatStateChange={setFormatState}
           onSaveStatusChange={setSaveStatus}
           zoomLevel={viewSettings.zoomLevel}
           showLineNumbers={viewSettings.showLineNumbers}
