@@ -10,13 +10,13 @@ export default function UserTypePage() {
   const router = useRouter()
 
   const handleReaderChoice = () => {
-    // 普通读者 - 设置标志并跳转到简化工作台
+    // 一键翻译 - 设置标志并跳转到简化工作台
     localStorage.setItem('userType', 'reader')
     router.push('/reader-workspace')
   }
 
   const handleProfessionalChoice = () => {
-    // 专业译者 - 设置标志并跳转到工作台
+    // 专业模式 - 设置标志并跳转到工作台
     localStorage.setItem('userType', 'professional')
     router.push('/workspace')
   }
@@ -42,15 +42,15 @@ export default function UserTypePage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* 普通读者选项 */}
+            {/* 一键翻译选项 */}
             <Card className="hover:shadow-xl transition-shadow duration-300 cursor-pointer border-2 hover:border-blue-500" onClick={handleReaderChoice}>
               <CardHeader className="text-center pb-6">
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <BookOpen className="w-10 h-10 text-blue-600" />
                 </div>
-                <CardTitle className="text-2xl mb-2">普通读者</CardTitle>
+                <CardTitle className="text-2xl mb-2">一键翻译</CardTitle>
                 <CardDescription className="text-base">
-                  快速获取译文，一键完成翻译
+                  秒速翻译，格式无损，动动鼠标就能翻译整本书
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -59,25 +59,25 @@ export default function UserTypePage() {
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
                       <span className="text-blue-600 text-xs">✓</span>
                     </div>
-                    <span>一键翻译，无需复杂设置</span>
+                    <span>快速上传，秒级响应，极速翻译</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
                       <span className="text-blue-600 text-xs">✓</span>
                     </div>
-                    <span>自动识别语言和领域</span>
+                    <span>保留全部格式，表格图片完美还原</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
                       <span className="text-blue-600 text-xs">✓</span>
                     </div>
-                    <span>快速下载翻译结果</span>
+                    <span>无需二次编辑，直接使用译文</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
                       <span className="text-blue-600 text-xs">✓</span>
                     </div>
-                    <span>适合阅读理解需求</span>
+                    <span>动动鼠标即可翻译整本书籍</span>
                   </div>
                 </div>
                 <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" size="lg">
@@ -87,13 +87,13 @@ export default function UserTypePage() {
               </CardContent>
             </Card>
 
-            {/* 专业译者选项 */}
+            {/* 专业模式选项 */}
             <Card className="hover:shadow-xl transition-shadow duration-300 cursor-pointer border-2 hover:border-purple-500" onClick={handleProfessionalChoice}>
               <CardHeader className="text-center pb-6">
                 <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Briefcase className="w-10 h-10 text-purple-600" />
                 </div>
-                <CardTitle className="text-2xl mb-2">专业译者</CardTitle>
+                <CardTitle className="text-2xl mb-2">专业模式</CardTitle>
                 <CardDescription className="text-base">
                   精细控制，打造完美译文
                 </CardDescription>
