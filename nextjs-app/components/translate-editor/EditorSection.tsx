@@ -24,6 +24,12 @@ interface EditorSectionProps {
   onEditorScroll: (progress: number) => void
   onFormatStateChange: (state: FormatState) => void
   onSaveStatusChange: (status: 'saved' | 'saving' | 'unsaved') => void
+  // 视图设置
+  zoomLevel?: number
+  showLineNumbers?: boolean
+  fontFamily?: string
+  fontSize?: number
+  lineHeight?: number
 }
 
 export const EditorSection: React.FC<EditorSectionProps> = ({
@@ -43,6 +49,11 @@ export const EditorSection: React.FC<EditorSectionProps> = ({
   onEditorScroll,
   onFormatStateChange,
   onSaveStatusChange,
+  zoomLevel,
+  showLineNumbers,
+  fontFamily,
+  fontSize,
+  lineHeight,
 }) => {
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget
@@ -73,6 +84,11 @@ export const EditorSection: React.FC<EditorSectionProps> = ({
               onChange={handleContentChange}
               onFormatStateChange={onFormatStateChange}
               formatState={formatState}
+              zoomLevel={zoomLevel}
+              showLineNumbers={showLineNumbers}
+              fontFamily={fontFamily}
+              fontSize={fontSize}
+              lineHeight={lineHeight}
               onClick={() => {}}
             />
           </div>

@@ -29,6 +29,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { ChevronDown } from 'lucide-react'
+import { ColorPicker } from './ColorPicker'
+import { LineHeightPicker } from './LineHeightPicker'
 import {
   FileText,
   FolderOpen,
@@ -78,6 +80,13 @@ interface MainToolbarProps {
   onSave: () => void
   onSaveAs: () => void
   onPrint: () => void
+  onImportWord?: () => void
+  onImportPDF?: () => void
+  onImportText?: () => void
+  onExportWord?: () => void
+  onExportPDF?: () => void
+  onExportHTML?: () => void
+  onExportText?: () => void
   onUndo: () => void
   onRedo: () => void
   onFindReplace: () => void
@@ -139,6 +148,13 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
   onSave,
   onSaveAs,
   onPrint,
+  onImportWord,
+  onImportPDF,
+  onImportText,
+  onExportWord,
+  onExportPDF,
+  onExportHTML,
+  onExportText,
   onUndo,
   onRedo,
   onFindReplace,
@@ -225,9 +241,9 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   导入
                 </MenubarSubTrigger>
                 <MenubarSubContent>
-                  <MenubarItem>从 Word 导入</MenubarItem>
-                  <MenubarItem>从 PDF 导入</MenubarItem>
-                  <MenubarItem>从文本文件导入</MenubarItem>
+                  <MenubarItem onClick={onImportWord}>从 Word 导入</MenubarItem>
+                  <MenubarItem onClick={onImportPDF}>从 PDF 导入</MenubarItem>
+                  <MenubarItem onClick={onImportText}>从文本文件导入</MenubarItem>
                 </MenubarSubContent>
               </MenubarSub>
               <MenubarSub>
@@ -236,10 +252,10 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   导出
                 </MenubarSubTrigger>
                 <MenubarSubContent>
-                  <MenubarItem>导出为 Word (.docx)</MenubarItem>
-                  <MenubarItem>导出为 PDF</MenubarItem>
-                  <MenubarItem>导出为纯文本</MenubarItem>
-                  <MenubarItem>导出为 HTML</MenubarItem>
+                  <MenubarItem onClick={onExportWord}>导出为 Word (.docx)</MenubarItem>
+                  <MenubarItem onClick={onExportPDF}>导出为 PDF</MenubarItem>
+                  <MenubarItem onClick={onExportText}>导出为纯文本</MenubarItem>
+                  <MenubarItem onClick={onExportHTML}>导出为 HTML</MenubarItem>
                 </MenubarSubContent>
               </MenubarSub>
               <MenubarSeparator />
@@ -288,7 +304,10 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                 <MenubarShortcut>Ctrl+H</MenubarShortcut>
               </MenubarItem>
               <MenubarSeparator />
-              <MenubarItem>全选 <MenubarShortcut>Ctrl+A</MenubarShortcut></MenubarItem>
+              <MenubarItem onClick={() => document.execCommand('selectAll')}>
+                全选 
+                <MenubarShortcut>Ctrl+A</MenubarShortcut>
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 
@@ -312,20 +331,26 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
                   缩放
                 </MenubarSubTrigger>
                 <MenubarSubContent>
-                  <MenubarItem>放大 <MenubarShortcut>Ctrl++</MenubarShortcut></MenubarItem>
-                  <MenubarItem>缩小 <MenubarShortcut>Ctrl+-</MenubarShortcut></MenubarItem>
-                  <MenubarItem>实际大小 <MenubarShortcut>Ctrl+0</MenubarShortcut></MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('zoomIn'))}>
+                    放大 <MenubarShortcut>Ctrl++</MenubarShortcut>
+                  </MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('zoomOut'))}>
+                    缩小 <MenubarShortcut>Ctrl+-</MenubarShortcut>
+                  </MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('zoomReset'))}>
+                    实际大小 <MenubarShortcut>Ctrl+0</MenubarShortcut>
+                  </MenubarItem>
                   <MenubarSeparator />
-                  <MenubarItem>50%</MenubarItem>
-                  <MenubarItem>75%</MenubarItem>
-                  <MenubarItem>100%</MenubarItem>
-                  <MenubarItem>125%</MenubarItem>
-                  <MenubarItem>150%</MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('setZoom', { detail: 50 }))}>50%</MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('setZoom', { detail: 75 }))}>75%</MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('setZoom', { detail: 100 }))}>100%</MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('setZoom', { detail: 125 }))}>125%</MenubarItem>
+                  <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('setZoom', { detail: 150 }))}>150%</MenubarItem>
                 </MenubarSubContent>
               </MenubarSub>
               <MenubarSeparator />
               <MenubarItem>全屏模式 <MenubarShortcut>F11</MenubarShortcut></MenubarItem>
-              <MenubarItem>
+              <MenubarItem onClick={() => window.dispatchEvent(new CustomEvent('openViewSettings'))}>
                 <Settings className="h-4 w-4 mr-2" />
                 视图设置
               </MenubarItem>
@@ -437,7 +462,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
               size="sm"
               onClick={onUndo}
               disabled={!canUndo}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="撤销 (Ctrl+Z)"
             >
               <Undo className="h-4 w-4" />
@@ -447,32 +472,35 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
               size="sm"
               onClick={onRedo}
               disabled={!canRedo}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="重做 (Ctrl+Y)"
             >
               <Redo className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="h-7 w-px bg-gray-300" />
+          <div className="h-6 w-px bg-gray-300 mx-1" />
 
           {/* 字体选择 */}
           <Select value={fontFamily} onValueChange={onFontFamily}>
-            <SelectTrigger className="h-9 w-40" style={{fontSize: '13px'}}>
+            <SelectTrigger className="h-9 w-32" style={{fontSize: '13px'}}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="default">默认字体</SelectItem>
-              <SelectItem value="songti">宋体</SelectItem>
-              <SelectItem value="heiti">黑体</SelectItem>
-              <SelectItem value="kaiti">楷体</SelectItem>
-              <SelectItem value="fangsong">仿宋</SelectItem>
+              <SelectItem value="SimSun, serif">宋体</SelectItem>
+              <SelectItem value="SimHei, sans-serif">黑体</SelectItem>
+              <SelectItem value="KaiTi, serif">楷体</SelectItem>
+              <SelectItem value="FangSong, serif">仿宋</SelectItem>
+              <SelectItem value="Arial, sans-serif">Arial</SelectItem>
+              <SelectItem value="Times New Roman, serif">Times New Roman</SelectItem>
+              <SelectItem value="Courier New, monospace">Courier New</SelectItem>
             </SelectContent>
           </Select>
 
           {/* 字号选择 */}
           <Select value={fontSize} onValueChange={onFontSize}>
-            <SelectTrigger className="h-9 w-22" style={{fontSize: '13px'}}>
+            <SelectTrigger className="h-9 w-18" style={{fontSize: '13px'}}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -492,14 +520,14 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             </SelectContent>
           </Select>
 
-          <div className="h-7 w-px bg-gray-300" />
+          <div className="h-6 w-px bg-gray-300 mx-1" />
 
           {/* 文本格式按钮 */}
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0">
             <Toggle
               pressed={isBold}
               onPressedChange={onBold}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="加粗 (Ctrl+B)"
             >
               <Bold className="h-4 w-4" />
@@ -507,7 +535,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <Toggle
               pressed={isItalic}
               onPressedChange={onItalic}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="斜体 (Ctrl+I)"
             >
               <Italic className="h-4 w-4" />
@@ -515,7 +543,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <Toggle
               pressed={isUnderline}
               onPressedChange={onUnderline}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="下划线 (Ctrl+U)"
             >
               <Underline className="h-4 w-4" />
@@ -523,21 +551,33 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <Toggle
               pressed={isStrikethrough}
               onPressedChange={onStrikethrough}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="删除线"
             >
               <Strikethrough className="h-4 w-4" />
             </Toggle>
+            
+            {/* 颜色选择器 */}
+            <ColorPicker
+              value={textColor}
+              onChange={onTextColor}
+              type="text"
+            />
+            <ColorPicker
+              value={backgroundColor}
+              onChange={onBackgroundColor}
+              type="background"
+            />
           </div>
 
-          <div className="h-7 w-px bg-gray-300" />
+          <div className="h-6 w-px bg-gray-300 mx-1" />
 
           {/* 对齐按钮 */}
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0">
             <Toggle
               pressed={alignment === 'left'}
               onPressedChange={() => onAlign?.('left')}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="左对齐"
             >
               <AlignLeft className="h-4 w-4" />
@@ -545,7 +585,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <Toggle
               pressed={alignment === 'center'}
               onPressedChange={() => onAlign?.('center')}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="居中对齐"
             >
               <AlignCenter className="h-4 w-4" />
@@ -553,7 +593,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <Toggle
               pressed={alignment === 'right'}
               onPressedChange={() => onAlign?.('right')}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="右对齐"
             >
               <AlignRight className="h-4 w-4" />
@@ -561,21 +601,21 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <Toggle
               pressed={alignment === 'justify'}
               onPressedChange={() => onAlign?.('justify')}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="两端对齐"
             >
               <AlignJustify className="h-4 w-4" />
             </Toggle>
           </div>
 
-          <div className="h-7 w-px bg-gray-300" />
+          <div className="h-6 w-px bg-gray-300 mx-1" />
 
           {/* 列表和缩进 */}
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0">
             <Toggle
               pressed={isBulletList}
               onPressedChange={onBulletList}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="项目符号列表"
             >
               <List className="h-4 w-4" />
@@ -583,7 +623,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
             <Toggle
               pressed={isNumberedList}
               onPressedChange={onNumberedList}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="编号列表"
             >
               <ListOrdered className="h-4 w-4" />
@@ -592,7 +632,7 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onOutdent}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="减少缩进"
             >
               <IndentDecrease className="h-4 w-4" />
@@ -601,16 +641,22 @@ export const MainToolbar: React.FC<MainToolbarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onIndent}
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0"
               title="增加缩进"
             >
               <IndentIncrease className="h-4 w-4" />
             </Button>
+            
+            {/* 行高选择器 */}
+            <LineHeightPicker
+              value={lineHeight}
+              onChange={onLineHeight}
+            />
           </div>
         </div>
         
         {/* AI聊天控制按钮 - 最右侧 */}
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-0">
           <div className="h-4 w-px bg-gray-300 mr-1" />
           <Button
             variant="ghost"

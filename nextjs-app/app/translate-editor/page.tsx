@@ -13,6 +13,15 @@ import { useAIChat } from "./hooks/useAIChat"
 import { useTextSelection } from "./hooks/useTextSelection"
 import { FormatState } from "./types"
 import { translatedContent, originalSentences, defaultCollaborators } from "./constants"
+import DocumentService, { Document } from "@/services/documentService"
+import { useToast } from "@/hooks/use-toast"
+import { ExportDialog } from "@/components/translate-editor/ExportDialog"
+import { FindReplaceDialog, FindReplaceOptions } from "@/components/translate-editor/FindReplaceDialog"
+import { ViewSettingsDialog, ViewSettings } from "@/components/translate-editor/ViewSettingsDialog"
+import { InsertImageDialog } from "@/components/translate-editor/InsertImageDialog"
+import { InsertTableDialog } from "@/components/translate-editor/InsertTableDialog"
+import { InsertLinkDialog } from "@/components/translate-editor/InsertLinkDialog"
+import { InsertSymbolDialog } from "@/components/translate-editor/InsertSymbolDialog"
 
 /**
  * 译文编辑器页面 - 左右分栏布局
@@ -28,11 +37,39 @@ export default function TranslateEditorPage() {
   // 文档状态
   const [documentTitle, setDocumentTitle] = useState('AI翻译文档 - 2024年11月')
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
+  const [currentDocument, setCurrentDocument] = useState<Document | null>(null)
   
   // 视图状态
   const [showRuler, setShowRuler] = useState(false)
   const [viewMode, setViewMode] = useState<'edit' | 'read' | 'preview'>('edit')
   const [zoomLevel, setZoomLevel] = useState(100)
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showFindReplaceDialog, setShowFindReplaceDialog] = useState(false)
+  const [showViewSettingsDialog, setShowViewSettingsDialog] = useState(false)
+  const [showInsertImageDialog, setShowInsertImageDialog] = useState(false)
+  const [showInsertTableDialog, setShowInsertTableDialog] = useState(false)
+  const [showInsertLinkDialog, setShowInsertLinkDialog] = useState(false)
+  const [showInsertSymbolDialog, setShowInsertSymbolDialog] = useState(false)
+  
+  // 视图设置
+  const [viewSettings, setViewSettings] = useState<ViewSettings>({
+    zoomLevel: 100,
+    showRuler: false,
+    showOriginal: false,
+    showStatusBar: true,
+    showLineNumbers: false,
+    showWordCount: true,
+    theme: 'light',
+    fontSize: '14',
+    lineHeight: 1.5,
+    fontFamily: 'default',
+    wordWrap: true,
+    highlightCurrentLine: true,
+    sidebarPosition: 'right',
+    sidebarWidth: 40,
+    editorWidth: 'fixed',
+    maxEditorWidth: 816,
+  })
   
   // 格式状态
   const [formatState, setFormatState] = useState<FormatState>({
@@ -42,7 +79,7 @@ export default function TranslateEditorPage() {
     isStrikethrough: false,
     textColor: '#000000',
     backgroundColor: '#FFFFFF',
-    fontSize: '12',
+    fontSize: '14',
     fontFamily: 'default',
     alignment: 'left',
     isBulletList: false,
@@ -82,17 +119,190 @@ export default function TranslateEditorPage() {
   
   // 引用
   const editorRef = useRef<EditorCanvasRef>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
   
   // 初始化状态
   const [isInitialized, setIsInitialized] = useState(false)
+  
+  // 使用 toast 提示
+  const { toast } = useToast()
 
   // 计算字数和字符数
   const wordCount = editableContent.trim().split(/\s+/).length
   const charCount = editableContent.length
 
+  // 键盘快捷键支持
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+F 或 Cmd+F: 查找
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault()
+        setShowFindReplaceDialog(true)
+      }
+      // Ctrl+H 或 Cmd+H: 查找和替换
+      if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+        e.preventDefault()
+        setShowFindReplaceDialog(true)
+      }
+      // Ctrl+S 或 Cmd+S: 保存
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        handleSave()
+      }
+      // Ctrl+Shift+S 或 Cmd+Shift+S: 另存为
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 's') {
+        e.preventDefault()
+        handleSaveAs()
+      }
+      // Ctrl+N 或 Cmd+N: 新建
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault()
+        handleNewDocument()
+      }
+      // Ctrl+O 或 Cmd+O: 打开
+      if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+        e.preventDefault()
+        handleOpenDocument()
+      }
+      // Ctrl+P 或 Cmd+P: 打印
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault()
+        handlePrint()
+      }
+      // Ctrl+A 或 Cmd+A: 全选
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        // 让编辑器处理全选
+        if (editorRef.current && document.activeElement?.closest('.ProseMirror')) {
+          e.preventDefault()
+          handleSelectAll()
+        }
+      }
+      // Ctrl+B 或 Cmd+B: 加粗
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault()
+        handleBold()
+      }
+      // Ctrl+I 或 Cmd+I: 斜体
+      if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+        e.preventDefault()
+        handleItalic()
+      }
+      // Ctrl+U 或 Cmd+U: 下划线
+      if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+        e.preventDefault()
+        handleUnderline()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+  
+  // 监听缩放和视图设置事件
+  useEffect(() => {
+    const handleZoomIn = () => {
+      setZoomLevel(prev => Math.min(prev + 10, 200))
+      setViewSettings(prev => ({ ...prev, zoomLevel: Math.min(prev.zoomLevel + 10, 200) }))
+    }
+    
+    const handleZoomOut = () => {
+      setZoomLevel(prev => Math.max(prev - 10, 50))
+      setViewSettings(prev => ({ ...prev, zoomLevel: Math.max(prev.zoomLevel - 10, 50) }))
+    }
+    
+    const handleZoomReset = () => {
+      setZoomLevel(100)
+      setViewSettings(prev => ({ ...prev, zoomLevel: 100 }))
+    }
+    
+    const handleSetZoom = (e: CustomEvent) => {
+      const level = e.detail
+      setZoomLevel(level)
+      setViewSettings(prev => ({ ...prev, zoomLevel: level }))
+    }
+    
+    const handleOpenViewSettings = () => {
+      setShowViewSettingsDialog(true)
+    }
+    
+    window.addEventListener('zoomIn', handleZoomIn)
+    window.addEventListener('zoomOut', handleZoomOut)
+    window.addEventListener('zoomReset', handleZoomReset)
+    window.addEventListener('setZoom', handleSetZoom as EventListener)
+    window.addEventListener('openViewSettings', handleOpenViewSettings)
+    
+    return () => {
+      window.removeEventListener('zoomIn', handleZoomIn)
+      window.removeEventListener('zoomOut', handleZoomOut)
+      window.removeEventListener('zoomReset', handleZoomReset)
+      window.removeEventListener('setZoom', handleSetZoom as EventListener)
+      window.removeEventListener('openViewSettings', handleOpenViewSettings)
+    }
+  }, [])
+  
+  // 初始化时加载保存的文档或自动保存内容
   useEffect(() => {
     setIsInitialized(true)
+    
+    // 尝试加载视图设置
+    const savedSettings = localStorage.getItem('viewSettings')
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings)
+        setViewSettings(settings)
+        setZoomLevel(settings.zoomLevel)
+        setShowRuler(settings.showRuler)
+        setShowOriginal(settings.showOriginal)
+      } catch (error) {
+        console.error('加载视图设置失败:', error)
+      }
+    }
+    
+    // 尝试加载当前文档
+    const savedDoc = DocumentService.getCurrentDocument()
+    if (savedDoc) {
+      setCurrentDocument(savedDoc)
+      setEditableContent(savedDoc.content)
+      setDocumentTitle(savedDoc.title)
+    } else {
+      // 检查是否有自动保存的内容
+      const autoSaved = DocumentService.getAutoSavedContent()
+      if (autoSaved) {
+        setEditableContent(autoSaved.content)
+        if (autoSaved.title) {
+          setDocumentTitle(autoSaved.title)
+        }
+        setSaveStatus('unsaved')
+        
+        toast({
+          title: "恢复自动保存",
+          description: "已恢复上次编辑的内容",
+        })
+      }
+    }
   }, [])
+  
+  // 自动保存（每30秒）
+  useEffect(() => {
+    if (!editableContent) return
+    
+    const autoSaveTimer = setInterval(() => {
+      DocumentService.autoSave(editableContent, documentTitle)
+      console.log('自动保存完成')
+    }, 30000) // 30秒
+    
+    return () => clearInterval(autoSaveTimer)
+  }, [editableContent, documentTitle])
+  
+  // 监听内容变化，标记为未保存
+  useEffect(() => {
+    if (editableContent && currentDocument) {
+      if (editableContent !== currentDocument.content) {
+        setSaveStatus('unsaved')
+      }
+    }
+  }, [editableContent, currentDocument])
 
   /**
    * 添加选中文本到@引用
@@ -107,43 +317,555 @@ export default function TranslateEditorPage() {
   // 工具栏事件处理函数
   const handleUndo = () => editorRef.current?.undo()
   const handleRedo = () => editorRef.current?.redo()
-  const handleNewDocument = () => console.log('New document')
-  const handleOpenDocument = () => console.log('Open document')
-  const handleSave = () => {
-    setSaveStatus('saving')
-    setTimeout(() => setSaveStatus('saved'), 1000)
+  
+  // 新建文档
+  const handleNewDocument = () => {
+    if (editableContent && saveStatus === 'unsaved') {
+      // 如果有未保存的内容，提示用户
+      if (!confirm('当前文档未保存，是否继续？')) {
+        return
+      }
+    }
+    
+    const newDoc = DocumentService.createNewDocument()
+    setCurrentDocument(newDoc)
+    setEditableContent('')
+    setDocumentTitle(newDoc.title)
+    setSaveStatus('saved')
+    
+    // 清空编辑器历史
+    if (editorRef.current) {
+      // 重新初始化编辑器内容
+      editorRef.current.getEditor()?.commands.setContent('')
+    }
+    
+    toast({
+      title: "新建成功",
+      description: "已创建新文档",
+    })
   }
-  const handleSaveAs = () => console.log('Save as')
-  const handlePrint = () => console.log('Print')
-  const handleShare = () => console.log('Share')
-  const handleExport = () => console.log('Export')
-  const handleFindReplace = () => console.log('Find and replace')
-  const handleCut = () => document.execCommand('cut')
-  const handleCopy = () => document.execCommand('copy')
-  const handlePaste = () => document.execCommand('paste')
-  const handleToggleRuler = () => setShowRuler(!showRuler)
-  const handleToggleOriginalView = () => setShowOriginal(!showOriginal)
-  const handleInsertImage = () => console.log('Insert image')
-  const handleInsertTable = () => console.log('Insert table')
-  const handleInsertLink = () => console.log('Insert link')
-  const handleInsertSymbol = () => console.log('Insert symbol')
-  const handleFormatText = () => console.log('Format text')
-  const handleFormatParagraph = () => console.log('Format paragraph')
-  const handleFormatStyles = () => console.log('Format styles')
-  const handleBold = () => setFormatState(prev => ({ ...prev, isBold: !prev.isBold }))
-  const handleItalic = () => setFormatState(prev => ({ ...prev, isItalic: !prev.isItalic }))
-  const handleUnderline = () => setFormatState(prev => ({ ...prev, isUnderline: !prev.isUnderline }))
-  const handleStrikethrough = () => setFormatState(prev => ({ ...prev, isStrikethrough: !prev.isStrikethrough }))
-  const handleTextColor = (color: string) => setFormatState(prev => ({ ...prev, textColor: color }))
-  const handleBackgroundColor = (color: string) => setFormatState(prev => ({ ...prev, backgroundColor: color }))
-  const handleFontSize = (size: string) => setFormatState(prev => ({ ...prev, fontSize: size }))
-  const handleFontFamily = (family: string) => setFormatState(prev => ({ ...prev, fontFamily: family }))
-  const handleAlign = (align: 'left' | 'center' | 'right' | 'justify') => setFormatState(prev => ({ ...prev, alignment: align }))
-  const handleBulletList = () => setFormatState(prev => ({ ...prev, isBulletList: !prev.isBulletList }))
-  const handleNumberedList = () => setFormatState(prev => ({ ...prev, isNumberedList: !prev.isNumberedList }))
-  const handleIndent = () => console.log('Indent')
-  const handleOutdent = () => console.log('Outdent')
-  const handleLineHeight = (height: string) => setFormatState(prev => ({ ...prev, lineHeight: height }))
+  
+  // 打开文档
+  const handleOpenDocument = () => {
+    fileInputRef.current?.click()
+  }
+  
+  // 处理文件选择
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    
+    try {
+      const doc = await DocumentService.openDocument(file)
+      setCurrentDocument(doc)
+      setEditableContent(doc.content)
+      setDocumentTitle(doc.title)
+      setSaveStatus('saved')
+      
+      toast({
+        title: "打开成功",
+        description: `已打开文档: ${doc.title}`,
+      })
+    } catch (error) {
+      toast({
+        title: "打开失败",
+        description: "无法打开所选文件",
+        variant: "destructive",
+      })
+    }
+    
+    // 清空 input 以便下次可以选择相同文件
+    event.target.value = ''
+  }
+  
+  // 保存文档
+  const handleSave = async () => {
+    setSaveStatus('saving')
+    
+    try {
+      let doc = currentDocument
+      if (!doc) {
+        // 如果没有当前文档，创建新文档
+        doc = DocumentService.createNewDocument()
+        doc.title = documentTitle
+        setCurrentDocument(doc)
+      }
+      
+      doc.content = editableContent
+      doc.title = documentTitle
+      
+      await DocumentService.saveDocument(doc)
+      setSaveStatus('saved')
+      
+      toast({
+        title: "保存成功",
+        description: "文档已保存到本地",
+      })
+    } catch (error) {
+      setSaveStatus('unsaved')
+      toast({
+        title: "保存失败",
+        description: "无法保存文档",
+        variant: "destructive",
+      })
+    }
+  }
+  
+  // 另存为
+  const handleSaveAs = () => {
+    setShowExportDialog(true)
+  }
+  
+  // 处理导出
+  const handleExport = async (format: string, filename: string) => {
+    try {
+      const fullFilename = `${filename}.${format}`
+      
+      switch (format) {
+        case 'docx':
+          await DocumentService.exportToWord(editableContent, fullFilename)
+          break
+        case 'pdf':
+          await DocumentService.exportToPDF(editableContent, fullFilename)
+          break
+        case 'html':
+          await DocumentService.exportToHTML(editableContent, fullFilename)
+          break
+        case 'txt':
+          await DocumentService.exportToText(editableContent, fullFilename)
+          break
+        default:
+          throw new Error('不支持的格式')
+      }
+      
+      toast({
+        title: "导出成功",
+        description: `文档已导出为 ${fullFilename}`,
+      })
+    } catch (error) {
+      toast({
+        title: "导出失败",
+        description: error instanceof Error ? error.message : "导出过程中出现错误",
+        variant: "destructive",
+      })
+    }
+  }
+  
+  // 打印文档
+  const handlePrint = async () => {
+    try {
+      await DocumentService.printDocument(editableContent, documentTitle)
+    } catch (error) {
+      toast({
+        title: "打印失败",
+        description: "无法打印文档",
+        variant: "destructive",
+      })
+    }
+  }
+  const handleShare = () => {
+    // 分享功能可以后续实现
+    toast({
+      title: "功能开发中",
+      description: "分享功能即将推出",
+    })
+  }
+  const handleExportMenu = () => setShowExportDialog(true)
+  
+  // 导入功能
+  const handleImportWord = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.docx,.doc'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (file) {
+        try {
+          const content = await DocumentService.importFromWord(file)
+          setEditableContent(content)
+          setDocumentTitle(file.name.replace(/\.[^/.]+$/, ''))
+          setSaveStatus('unsaved')
+          toast({
+            title: "导入成功",
+            description: `已导入 Word 文档: ${file.name}`,
+          })
+        } catch (error) {
+          toast({
+            title: "导入失败",
+            description: "无法导入 Word 文档",
+            variant: "destructive",
+          })
+        }
+      }
+    }
+    input.click()
+  }
+  
+  const handleImportPDF = () => {
+    toast({
+      title: "功能开发中",
+      description: "PDF 导入功能即将推出",
+    })
+  }
+  
+  const handleImportText = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.txt,.md'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (file) {
+        try {
+          const content = await DocumentService.importFromText(file)
+          setEditableContent(content)
+          setDocumentTitle(file.name.replace(/\.[^/.]+$/, ''))
+          setSaveStatus('unsaved')
+          toast({
+            title: "导入成功",
+            description: `已导入文本文件: ${file.name}`,
+          })
+        } catch (error) {
+          toast({
+            title: "导入失败",
+            description: "无法导入文本文件",
+            variant: "destructive",
+          })
+        }
+      }
+    }
+    input.click()
+  }
+  
+  // 快速导出功能（从菜单直接导出）
+  const handleExportWord = async () => {
+    const filename = documentTitle.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')
+    await handleExport('docx', filename)
+  }
+  
+  const handleExportPDF = async () => {
+    const filename = documentTitle.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')
+    await handleExport('pdf', filename)
+  }
+  
+  const handleExportHTML = async () => {
+    const filename = documentTitle.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')
+    await handleExport('html', filename)
+  }
+  
+  const handleExportText = async () => {
+    const filename = documentTitle.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')
+    await handleExport('txt', filename)
+  }
+  
+  // 查找和替换
+  const handleFindReplace = () => {
+    setShowFindReplaceDialog(true)
+  }
+  
+  // 处理查找高亮
+  const handleHighlight = (searchText: string, options: FindReplaceOptions) => {
+    if (editorRef.current) {
+      const count = editorRef.current.find(searchText, options)
+      if (count === 0) {
+        toast({
+          title: "未找到匹配项",
+          description: `未找到 "${searchText}"`,
+        })
+      }
+    }
+  }
+  
+  // 处理替换
+  const handleReplace = (searchText: string, replaceText: string, options: FindReplaceOptions) => {
+    if (editorRef.current) {
+      editorRef.current.findAndReplace(searchText, replaceText, options.replaceAll)
+      setSaveStatus('unsaved')
+      
+      toast({
+        title: options.replaceAll ? "全部替换完成" : "替换完成",
+        description: options.replaceAll 
+          ? `已将所有 "${searchText}" 替换为 "${replaceText}"`
+          : `已替换 "${searchText}" 为 "${replaceText}"`,
+      })
+    }
+  }
+  
+  // 剪切、复制、粘贴 - 使用编辑器的方法
+  const handleCut = () => {
+    if (editorRef.current) {
+      editorRef.current.cut()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleCopy = () => {
+    if (editorRef.current) {
+      editorRef.current.copy()
+    }
+  }
+  
+  const handlePaste = async () => {
+    if (editorRef.current) {
+      await editorRef.current.paste()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  // 全选
+  const handleSelectAll = () => {
+    if (editorRef.current) {
+      editorRef.current.selectAll()
+    }
+  }
+  const handleToggleRuler = () => {
+    setShowRuler(!showRuler)
+    setViewSettings(prev => ({ ...prev, showRuler: !prev.showRuler }))
+  }
+  const handleToggleOriginalView = () => {
+    setShowOriginal(!showOriginal)
+    setViewSettings(prev => ({ ...prev, showOriginal: !prev.showOriginal }))
+  }
+  
+  // 处理视图设置变化
+  const handleViewSettingsChange = (newSettings: ViewSettings) => {
+    setViewSettings(newSettings)
+    setZoomLevel(newSettings.zoomLevel)
+    setShowRuler(newSettings.showRuler)
+    setShowOriginal(newSettings.showOriginal)
+    
+    // 保存设置到本地存储
+    localStorage.setItem('viewSettings', JSON.stringify(newSettings))
+    
+    toast({
+      title: "设置已应用",
+      description: "视图设置已更新",
+    })
+  }
+  
+  // 打开视图设置
+  const handleViewSettings = () => {
+    setShowViewSettingsDialog(true)
+  }
+  
+  // 插入功能
+  const handleInsertImage = () => {
+    setShowInsertImageDialog(true)
+  }
+  
+  const handleInsertImageConfirm = (imageUrl: string, altText?: string) => {
+    if (editorRef.current) {
+      editorRef.current.insertImage(imageUrl)
+      setSaveStatus('unsaved')
+      toast({
+        title: "图片已插入",
+        description: "图片已成功插入到编辑器中",
+      })
+    }
+  }
+  
+  const handleInsertTable = () => {
+    setShowInsertTableDialog(true)
+  }
+  
+  const handleInsertTableConfirm = (rows: number, cols: number, withHeader: boolean) => {
+    if (editorRef.current) {
+      editorRef.current.insertTable()
+      setSaveStatus('unsaved')
+      toast({
+        title: "表格已插入",
+        description: `已插入 ${rows}×${cols} 的表格`,
+      })
+    }
+  }
+  
+  const handleInsertLink = () => {
+    // 获取选中的文本作为默认链接文字
+    const selectedText = editorRef.current?.getEditor()?.state.doc.textBetween(
+      editorRef.current?.getEditor()?.state.selection.from,
+      editorRef.current?.getEditor()?.state.selection.to
+    )
+    setShowInsertLinkDialog(true)
+  }
+  
+  const handleInsertLinkConfirm = (url: string, text: string, openInNewTab: boolean) => {
+    if (editorRef.current) {
+      // 如果有选中文本，替换为链接
+      const editor = editorRef.current.getEditor()
+      if (editor) {
+        const { from, to } = editor.state.selection
+        const hasSelection = from !== to
+        
+        if (hasSelection) {
+          // 替换选中文本为链接
+          editor.chain()
+            .focus()
+            .setLink({ href: url, target: openInNewTab ? '_blank' : undefined })
+            .run()
+        } else {
+          // 插入新链接
+          editor.chain()
+            .focus()
+            .insertContent(`<a href="${url}"${openInNewTab ? ' target="_blank"' : ''}>${text}</a>`)
+            .run()
+        }
+      }
+      
+      setSaveStatus('unsaved')
+      toast({
+        title: "链接已插入",
+        description: "链接已成功插入到编辑器中",
+      })
+    }
+  }
+  
+  const handleInsertSymbol = () => {
+    setShowInsertSymbolDialog(true)
+  }
+  
+  const handleInsertSymbolConfirm = (symbol: string) => {
+    if (editorRef.current) {
+      const editor = editorRef.current.getEditor()
+      if (editor) {
+        editor.chain().focus().insertContent(symbol).run()
+      }
+      setSaveStatus('unsaved')
+    }
+  }
+  // 格式化功能 - 连接到编辑器
+  const handleFormatText = () => {
+    // 打开文本格式对话框（可以后续实现）
+    toast({
+      title: "功能开发中",
+      description: "文本格式设置即将推出",
+    })
+  }
+  
+  const handleFormatParagraph = () => {
+    // 打开段落格式对话框（可以后续实现）
+    toast({
+      title: "功能开发中",
+      description: "段落格式设置即将推出",
+    })
+  }
+  
+  const handleFormatStyles = () => {
+    // 打开样式格式对话框（可以后续实现）
+    toast({
+      title: "功能开发中",
+      description: "样式格式设置即将推出",
+    })
+  }
+  
+  // 文本样式
+  const handleBold = () => {
+    if (editorRef.current) {
+      editorRef.current.toggleBold()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleItalic = () => {
+    if (editorRef.current) {
+      editorRef.current.toggleItalic()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleUnderline = () => {
+    if (editorRef.current) {
+      editorRef.current.toggleUnderline()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleStrikethrough = () => {
+    if (editorRef.current) {
+      editorRef.current.toggleStrike()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  // 颜色设置
+  const handleTextColor = (color: string) => {
+    if (editorRef.current) {
+      editorRef.current.setTextColor(color)
+      setFormatState(prev => ({ ...prev, textColor: color }))
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleBackgroundColor = (color: string) => {
+    if (editorRef.current) {
+      editorRef.current.setHighlight(color)
+      setFormatState(prev => ({ ...prev, backgroundColor: color }))
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  // 字体和字号
+  const handleFontSize = (size: string) => {
+    if (editorRef.current) {
+      editorRef.current.setFontSize(size)
+      setFormatState(prev => ({ ...prev, fontSize: size }))
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleFontFamily = (family: string) => {
+    if (editorRef.current) {
+      editorRef.current.setFontFamily(family)
+      setFormatState(prev => ({ ...prev, fontFamily: family }))
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  // 对齐方式
+  const handleAlign = (align: 'left' | 'center' | 'right' | 'justify') => {
+    if (editorRef.current) {
+      editorRef.current.setTextAlign(align)
+      setFormatState(prev => ({ ...prev, alignment: align }))
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  // 列表
+  const handleBulletList = () => {
+    if (editorRef.current) {
+      editorRef.current.toggleBulletList()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleNumberedList = () => {
+    if (editorRef.current) {
+      editorRef.current.toggleOrderedList()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  // 缩进
+  const handleIndent = () => {
+    if (editorRef.current) {
+      editorRef.current.indent()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  const handleOutdent = () => {
+    if (editorRef.current) {
+      editorRef.current.outdent()
+      setSaveStatus('unsaved')
+    }
+  }
+  
+  // 行高
+  const handleLineHeight = (height: string) => {
+    if (editorRef.current) {
+      editorRef.current.setLineHeight(height)
+      setFormatState(prev => ({ ...prev, lineHeight: height }))
+      setSaveStatus('unsaved')
+    }
+  }
   const togglePanelPin = () => setIsPanelPinned(!isPanelPinned)
   const handleEditorScroll = (progress: number) => setEditorScrollProgress(progress)
   const handleViewHistory = () => console.log('View chat history')
@@ -161,7 +883,7 @@ export default function TranslateEditorPage() {
         saveStatus={saveStatus}
         onSave={handleSave}
         onShare={handleShare}
-        onExport={handleExport}
+        onExport={handleExportMenu}
         collaborators={defaultCollaborators}
       />
 
@@ -172,6 +894,13 @@ export default function TranslateEditorPage() {
         onSave={handleSave}
         onSaveAs={handleSaveAs}
         onPrint={handlePrint}
+        onImportWord={handleImportWord}
+        onImportPDF={handleImportPDF}
+        onImportText={handleImportText}
+        onExportWord={handleExportWord}
+        onExportPDF={handleExportPDF}
+        onExportHTML={handleExportHTML}
+        onExportText={handleExportText}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onFindReplace={handleFindReplace}
@@ -257,8 +986,13 @@ export default function TranslateEditorPage() {
           onToggleOriginal={handleToggleOriginalView}
           onTogglePanelPin={togglePanelPin}
           onEditorScroll={handleEditorScroll}
-                onFormatStateChange={setFormatState}
+          onFormatStateChange={setFormatState}
           onSaveStatusChange={setSaveStatus}
+          zoomLevel={viewSettings.zoomLevel}
+          showLineNumbers={viewSettings.showLineNumbers}
+          fontFamily={viewSettings.fontFamily}
+          fontSize={viewSettings.fontSize}
+          lineHeight={viewSettings.lineHeight}
         />
 
         {/* 右侧AI聊天区域 - 40% */}
@@ -319,8 +1053,82 @@ export default function TranslateEditorPage() {
         </div>
       )}
       
+      {/* 隐藏的文件输入元素 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".txt,.md,.html,.docx,.doc"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+      
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".txt,.md,.html,.docx,.doc,.pdf"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+      
+      {/* 导出对话框 */}
+      <ExportDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        onExport={handleExport}
+        defaultFilename={documentTitle.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}
+      />
+      
+      {/* 查找替换对话框 */}
+      <FindReplaceDialog
+        open={showFindReplaceDialog}
+        onOpenChange={setShowFindReplaceDialog}
+        content={editorRef.current?.getContent() || editableContent}
+        onReplace={handleReplace}
+        onHighlight={handleHighlight}
+      />
+      
+      {/* 视图设置对话框 */}
+      <ViewSettingsDialog
+        open={showViewSettingsDialog}
+        onOpenChange={setShowViewSettingsDialog}
+        settings={viewSettings}
+        onSettingsChange={handleViewSettingsChange}
+      />
+      
+      {/* 插入图片对话框 */}
+      <InsertImageDialog
+        open={showInsertImageDialog}
+        onOpenChange={setShowInsertImageDialog}
+        onInsert={handleInsertImageConfirm}
+      />
+      
+      {/* 插入表格对话框 */}
+      <InsertTableDialog
+        open={showInsertTableDialog}
+        onOpenChange={setShowInsertTableDialog}
+        onInsert={handleInsertTableConfirm}
+      />
+      
+      {/* 插入链接对话框 */}
+      <InsertLinkDialog
+        open={showInsertLinkDialog}
+        onOpenChange={setShowInsertLinkDialog}
+        onInsert={handleInsertLinkConfirm}
+        selectedText={editorRef.current?.getEditor()?.state.doc.textBetween(
+          editorRef.current?.getEditor()?.state.selection.from || 0,
+          editorRef.current?.getEditor()?.state.selection.to || 0
+        )}
+      />
+      
+      {/* 插入符号对话框 */}
+      <InsertSymbolDialog
+        open={showInsertSymbolDialog}
+        onOpenChange={setShowInsertSymbolDialog}
+        onInsert={handleInsertSymbolConfirm}
+      />
+      
       {/* 添加高亮动画样式 */}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         /* 禁止非编辑器区域的文本选择 */
         * {
           -webkit-user-select: none;
@@ -449,7 +1257,7 @@ export default function TranslateEditorPage() {
         .animate-highlight {
           animation: highlight 0.5s ease-out;
         }
-      `}</style>
+      ` }} />
     </div>
   )
 }

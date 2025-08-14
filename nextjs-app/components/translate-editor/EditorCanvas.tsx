@@ -13,6 +13,8 @@ import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
+import { FontFamily } from '@tiptap/extension-font-family'
+import { FontSize, LineHeight } from '@/lib/tiptap-extensions'
 import { cn } from '@/lib/utils'
 
 export interface EditorCanvasProps {
@@ -36,6 +38,12 @@ export interface EditorCanvasProps {
     lineHeight: string
   }
   onFormatStateChange?: (state: any) => void
+  // 视图设置
+  zoomLevel?: number
+  showLineNumbers?: boolean
+  fontFamily?: string
+  fontSize?: number
+  lineHeight?: number
 }
 
 export interface EditorCanvasRef {
@@ -62,8 +70,19 @@ export interface EditorCanvasRef {
   redo: () => void
   canUndo: () => boolean
   canRedo: () => boolean
+  // 编辑操作
+  cut: () => void
+  copy: () => void
+  paste: () => void
+  selectAll: () => void
+  // 查找替换
+  find: (searchText: string, options?: any) => number
+  findAndReplace: (searchText: string, replaceText: string, replaceAll?: boolean) => void
+  clearHighlights: () => void
   // 获取编辑器实例
   getEditor: () => any
+  getContent: () => string
+  getHTML: () => string
 }
 
 /**
@@ -71,7 +90,19 @@ export interface EditorCanvasRef {
  * 使用TipTap作为富文本编辑器的基础
  */
 export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
-  ({ content, onChange, className, formatState, onFormatStateChange, onClick }, ref) => {
+  ({ 
+    content, 
+    onChange, 
+    className, 
+    formatState, 
+    onFormatStateChange, 
+    onClick,
+    zoomLevel = 100,
+    showLineNumbers = false,
+    fontFamily: customFontFamily,
+    fontSize: customFontSize,
+    lineHeight: customLineHeight
+  }, ref) => {
     // 初始化TipTap编辑器
     const editor = useEditor({
       immediatelyRender: false,
@@ -94,6 +125,11 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
         Highlight.configure({
           multicolor: true,
         }),
+        FontFamily.configure({
+          types: ['textStyle'],
+        }),
+        FontSize,
+        LineHeight,
         Link.configure({
           openOnClick: false,
           HTMLAttributes: {
@@ -169,17 +205,17 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
         }
       },
       setFontSize: (size: string) => {
-        // 需要自定义扩展来支持字号
-        // 这里使用CSS样式作为临时方案
-        editor?.chain().focus().setMark('textStyle', { fontSize: `${size}pt` }).run()
+        if (size === 'default') {
+          editor?.chain().focus().unsetFontSize().run()
+        } else {
+          editor?.chain().focus().setFontSize(`${size}pt`).run()
+        }
       },
       setFontFamily: (family: string) => {
-        // 需要自定义扩展来支持字体
-        // 这里使用CSS样式作为临时方案
         if (family === 'default') {
-          editor?.chain().focus().unsetMark('textStyle').run()
+          editor?.chain().focus().unsetFontFamily().run()
         } else {
-          editor?.chain().focus().setMark('textStyle', { fontFamily: family }).run()
+          editor?.chain().focus().setFontFamily(family).run()
         }
       },
       setTextAlign: (align: 'left' | 'center' | 'right' | 'justify') => {
@@ -198,9 +234,11 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
         editor?.chain().focus().liftListItem('listItem').run()
       },
       setLineHeight: (height: string) => {
-        // 需要自定义扩展来支持行高
-        // 这里使用CSS样式作为临时方案
-        editor?.chain().focus().setMark('textStyle', { lineHeight: height }).run()
+        if (height === 'default') {
+          editor?.chain().focus().unsetLineHeight().run()
+        } else {
+          editor?.chain().focus().setLineHeight(height).run()
+        }
       },
       insertTable: () => {
         editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
@@ -215,7 +253,104 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
       redo: () => editor?.chain().focus().redo().run(),
       canUndo: () => editor?.can().undo() || false,
       canRedo: () => editor?.can().redo() || false,
+      // 编辑操作
+      cut: () => {
+        if (editor) {
+          const selection = editor.state.selection
+          const selectedText = editor.state.doc.textBetween(selection.from, selection.to)
+          if (selectedText) {
+            navigator.clipboard.writeText(selectedText)
+            editor.chain().focus().deleteSelection().run()
+          }
+        }
+      },
+      copy: () => {
+        if (editor) {
+          const selection = editor.state.selection
+          const selectedText = editor.state.doc.textBetween(selection.from, selection.to)
+          if (selectedText) {
+            navigator.clipboard.writeText(selectedText)
+          }
+        }
+      },
+      paste: async () => {
+        if (editor) {
+          try {
+            const text = await navigator.clipboard.readText()
+            editor.chain().focus().insertContent(text).run()
+          } catch (error) {
+            console.error('粘贴失败:', error)
+          }
+        }
+      },
+      selectAll: () => editor?.chain().focus().selectAll().run(),
+      // 查找替换
+      find: (searchText: string, options?: any) => {
+        if (!editor || !searchText) return 0
+        
+        const content = editor.getText()
+        let regex: RegExp
+        
+        try {
+          const flags = options?.caseSensitive ? 'g' : 'gi'
+          if (options?.useRegex) {
+            regex = new RegExp(searchText, flags)
+          } else {
+            const escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const pattern = options?.wholeWord ? `\\b${escapedText}\\b` : escapedText
+            regex = new RegExp(pattern, flags)
+          }
+          
+          const matches = content.match(regex)
+          
+          // 高亮匹配的文本
+          if (matches && matches.length > 0) {
+            // 这里可以添加高亮逻辑
+            // 暂时使用 mark 标签来高亮
+            const firstMatch = content.search(regex)
+            if (firstMatch >= 0) {
+              editor.chain()
+                .focus()
+                .setTextSelection({ from: firstMatch + 1, to: firstMatch + searchText.length + 1 })
+                .run()
+            }
+          }
+          
+          return matches ? matches.length : 0
+        } catch (error) {
+          console.error('查找错误:', error)
+          return 0
+        }
+      },
+      findAndReplace: (searchText: string, replaceText: string, replaceAll: boolean = false) => {
+        if (!editor || !searchText) return
+        
+        const content = editor.getHTML()
+        let newContent = content
+        
+        if (replaceAll) {
+          // 全部替换
+          const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+          newContent = content.replace(regex, replaceText)
+        } else {
+          // 替换第一个匹配
+          const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+          newContent = content.replace(regex, replaceText)
+        }
+        
+        if (newContent !== content) {
+          editor.chain().focus().setContent(newContent).run()
+        }
+      },
+      clearHighlights: () => {
+        // 清除所有高亮
+        if (editor) {
+          editor.chain().focus().unsetHighlight().run()
+        }
+      },
       getEditor: () => editor,
+      getContent: () => editor?.getText() || '',
+      getHTML: () => editor?.getHTML() || '',
     }), [editor])
 
     // 应用格式状态变化
@@ -226,21 +361,58 @@ export const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(
       // 但要注意避免无限循环
     }, [formatState, editor])
 
+    // 计算缩放样式
+    const zoomStyles = {
+      transform: `scale(${zoomLevel / 100})`,
+      transformOrigin: 'top center',
+      width: `${100 / (zoomLevel / 100)}%`,
+    }
+
+    // 编辑器自定义样式
+    const editorStyles = {
+      fontSize: customFontSize ? `${customFontSize}px` : undefined,
+      fontFamily: customFontFamily || undefined,
+      lineHeight: customLineHeight || undefined,
+    }
+
     return (
       <div className={cn('editor-canvas', className)}>
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden" style={{ maxWidth: '816px', margin: '0 auto' }}>
-          {/* 纸张效果 */}
-          <div className="bg-gradient-to-b from-gray-50 to-white">
-            {/* 编辑器内容 */}
-            <EditorContent 
-              editor={editor} 
-              className="relative editor-content"
-              onClick={onClick}
-            />
+        <div className="flex justify-center">
+          <div 
+            className="bg-white shadow-lg rounded-lg overflow-hidden transition-transform duration-200" 
+            style={{ 
+              ...zoomStyles,
+              maxWidth: '816px',
+            }}
+          >
+            {/* 纸张效果 */}
+            <div className="bg-gradient-to-b from-gray-50 to-white">
+              <div className="flex">
+                {/* 行号区域 */}
+                {showLineNumbers && (
+                  <div className="bg-gray-50 border-r border-gray-200 px-2 py-8 select-none">
+                    <div className="text-gray-400 text-xs font-mono">
+                      {Array.from({ length: 50 }, (_, i) => (
+                        <div key={i} className="h-6 leading-6">
+                          {i + 1}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* 编辑器内容 */}
+                <div className="flex-1" style={editorStyles}>
+                  <EditorContent 
+                    editor={editor} 
+                    className="relative editor-content"
+                    onClick={onClick}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        
-
       </div>
     )
   }
