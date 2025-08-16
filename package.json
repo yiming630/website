@@ -1,14 +1,26 @@
 {
-  "name": "seekhub-demo",
+  "name": "translation-platform",
   "version": "1.0.0",
-  "description": "SeekHub Demo Project",
+  "description": "AI-Powered Document Translation Platform",
   "private": true,
   "scripts": {
-    "dev": "cd nextjs-app && npm run dev",
-    "build": "cd nextjs-app && npm run build",
-    "start": "cd nextjs-app && npm run start",
-    "install": "cd nextjs-app && npm install --legacy-peer-deps",
-    "lint": "cd nextjs-app && npm run lint"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm run start",
+    "frontend:install": "cd frontend && npm install --legacy-peer-deps",
+    "lint": "cd frontend && npm run lint",
+    "backend:start": "cd backend && npm start",
+    "backend:dev": "cd backend && npm run dev",
+    "api:test": "node ./backend/graphql/test-api.js",
+    "db:reset": "node database/reset.js",
+    "db:init": "node database/init.js",
+    "db:test": "node -e \"require('./database/connection').testConnection()\"",
+    "db:setup": "npm run db:reset && npm run db:init"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "bcryptjs": "^2.4.3"
   },
   "keywords": [],
   "author": "",
