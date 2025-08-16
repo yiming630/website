@@ -1,0 +1,78 @@
+{
+  "endpoints": {
+    "graphql": {
+      "primary": "/graphql",
+      "playground": "/graphql",
+      "subscriptions": "/graphql"
+    },
+    "rest": {
+      "auth": {
+        "login": "/api/auth/login",
+        "register": "/api/auth/register",
+        "logout": "/api/auth/logout",
+        "refresh": "/api/auth/refresh",
+        "verify": "/api/auth/verify",
+        "forgotPassword": "/api/auth/forgot-password",
+        "resetPassword": "/api/auth/reset-password"
+      },
+      "users": {
+        "profile": "/api/users/profile",
+        "update": "/api/users/update",
+        "delete": "/api/users/delete",
+        "avatar": "/api/users/avatar"
+      },
+      "documents": {
+        "list": "/api/documents",
+        "create": "/api/documents/create",
+        "get": "/api/documents/:id",
+        "update": "/api/documents/:id",
+        "delete": "/api/documents/:id",
+        "upload": "/api/documents/upload",
+        "download": "/api/documents/:id/download",
+        "share": "/api/documents/:id/share"
+      },
+      "projects": {
+        "list": "/api/projects",
+        "create": "/api/projects/create",
+        "get": "/api/projects/:id",
+        "update": "/api/projects/:id",
+        "delete": "/api/projects/:id",
+        "members": "/api/projects/:id/members"
+      },
+      "ai": {
+        "translate": "/api/ai/translate",
+        "summarize": "/api/ai/summarize",
+        "grammar": "/api/ai/grammar",
+        "suggest": "/api/ai/suggest"
+      },
+      "health": {
+        "status": "/health",
+        "ready": "/ready",
+        "metrics": "/metrics"
+      }
+    },
+    "websocket": {
+      "collaboration": "/ws/collaboration",
+      "notifications": "/ws/notifications"
+    }
+  },
+  "versioning": {
+    "current": "v1",
+    "supported": ["v1"],
+    "deprecated": []
+  },
+  "rateLimit": {
+    "default": {
+      "windowMs": 900000,
+      "max": 100
+    },
+    "auth": {
+      "windowMs": 900000,
+      "max": 5
+    },
+    "ai": {
+      "windowMs": 3600000,
+      "max": 100
+    }
+  }
+}

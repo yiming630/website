@@ -1,0 +1,85 @@
+{
+  "features": {
+    "translation": {
+      "enabled": true,
+      "aiAssistance": true,
+      "maxDocumentSize": 10485760,
+      "supportedFormats": ["pdf", "docx", "txt", "html", "md"],
+      "autoSave": {
+        "enabled": true,
+        "intervalSeconds": 30
+      }
+    },
+    "collaboration": {
+      "enabled": true,
+      "realtime": true,
+      "maxCollaborators": 10,
+      "cursorSharing": true,
+      "comments": true
+    },
+    "ai": {
+      "enabled": true,
+      "provider": "gemini",
+      "maxTokensPerRequest": 4096,
+      "rateLimitPerHour": 100,
+      "features": {
+        "translation": true,
+        "summarization": true,
+        "grammarCheck": true,
+        "styleImprovement": true
+      }
+    },
+    "export": {
+      "enabled": true,
+      "formats": ["pdf", "docx", "txt", "html"],
+      "watermark": false,
+      "includeMetadata": true
+    },
+    "authentication": {
+      "enabled": true,
+      "providers": ["local", "google", "github"],
+      "twoFactorAuth": false,
+      "sessionTimeout": 3600000,
+      "passwordPolicy": {
+        "minLength": 8,
+        "requireUppercase": true,
+        "requireLowercase": true,
+        "requireNumbers": true,
+        "requireSpecialChars": false
+      }
+    },
+    "workspace": {
+      "maxProjects": 100,
+      "maxDocumentsPerProject": 500,
+      "versionHistory": {
+        "enabled": true,
+        "maxVersions": 50
+      },
+      "templates": {
+        "enabled": true,
+        "customTemplates": true
+      }
+    },
+    "billing": {
+      "enabled": false,
+      "plans": ["free", "pro", "enterprise"],
+      "trialDays": 14
+    },
+    "notifications": {
+      "enabled": true,
+      "email": true,
+      "inApp": true,
+      "push": false
+    },
+    "analytics": {
+      "enabled": true,
+      "trackUsage": true,
+      "anonymizeData": true
+    },
+    "experimental": {
+      "pdfToDocx": false,
+      "voiceInput": false,
+      "darkMode": true
+    }
+  }
+}
