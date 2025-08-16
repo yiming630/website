@@ -200,6 +200,39 @@ const typeDefs = gql`
     theme: String
   }
 
+  input SharePermissions {
+    canView: Boolean!
+    canComment: Boolean!
+    canEdit: Boolean!
+    canShare: Boolean!
+    canDownload: Boolean!
+  }
+
+  input AddCommentInput {
+    documentId: ID!
+    content: String!
+    parentCommentId: ID
+    position: CommentPositionInput!
+  }
+
+  input CommentPositionInput {
+    start: Int!
+    end: Int!
+    section: String
+  }
+
+  input LoginInput {
+    email: String!
+    password: String!
+  }
+
+  input RegisterInput {
+    name: String!
+    email: String!
+    password: String!
+    role: UserRole = READER
+  }
+
   input CreateProjectInput {
     name: String!
     description: String
@@ -213,6 +246,46 @@ const typeDefs = gql`
     defaultTranslationStyle: TranslationStyle!
     defaultSpecialization: String!
     requireReview: Boolean!
+  }
+
+  input TranslateTextInput {
+    text: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    style: String
+  }
+
+  input ImproveTranslationInput {
+    originalText: String!
+    currentTranslation: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    feedback: String
+  }
+
+  type TranslationResult {
+    originalText: String!
+    translatedText: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    style: String!
+    createdAt: String!
+  }
+
+  type TranslationImprovement {
+    originalText: String!
+    originalTranslation: String!
+    improvedTranslation: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    feedback: String
+    createdAt: String!
+  }
+
+  type AuthPayload {
+    token: String!
+    user: User!
+    refreshToken: String!
   }
 
   input UploadDocumentInput {
@@ -291,7 +364,26 @@ const typeDefs = gql`
 
     # Document mutations
     uploadDocument(input: UploadDocumentInput!): Document!
+    updateDocumentContent(input: UpdateDocumentContentInput!): Document!
+    retranslateDocument(
+      documentId: ID!
+      targetLanguage: String
+      translationStyle: TranslationStyle
+    ): Document!
+    translateText(input: TranslateTextInput!): TranslationResult!
+    improveTranslation(input: ImproveTranslationInput!): TranslationImprovement!
     deleteDocument(id: ID!): Boolean!
+
+    # Sharing
+    shareDocument(
+      documentId: ID!
+      userEmail: String!
+      permissions: SharePermissions!
+    ): Boolean!
+
+    # Comments
+    addComment(input: AddCommentInput!): Comment!
+    resolveComment(commentId: ID!): Comment!
 
     # Chat mutations
     sendChatMessage(input: SendChatMessageInput!): ChatMessage!
