@@ -1,5 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+
+#Nathan think these are redundant, but don't want to mess up
+frontend/
+
+
 # Dependencies
 node_modules/
 /node_modules
