@@ -1,0 +1,55 @@
+{
+  "book_id": "sample-book-001",
+  "title": "Sample Book for Testing",
+  "author": "Test Author",
+  "language": "English",
+  "target_language": "Chinese",
+  "status": "pending",
+  "created_at": "2025-01-01T00:00:00Z",
+  "metadata": {
+    "genre": "Technical",
+    "pages": 250,
+    "file_format": "docx",
+    "file_size_mb": 15.5
+  },
+  "chapters": [
+    {
+      "chapter_id": "ch001",
+      "title": "Introduction",
+      "content": "This is a sample introduction chapter for testing the translation system.",
+      "page_start": 1,
+      "page_end": 10,
+      "word_count": 500,
+      "status": "pending"
+    },
+    {
+      "chapter_id": "ch002", 
+      "title": "Getting Started",
+      "content": "This chapter covers the basic concepts and setup procedures.",
+      "page_start": 11,
+      "page_end": 25,
+      "word_count": 750,
+      "status": "pending"
+    },
+    {
+      "chapter_id": "ch003",
+      "title": "Advanced Topics",
+      "content": "Here we dive into more complex subjects and advanced techniques.",
+      "page_start": 26,
+      "page_end": 50,
+      "word_count": 1200,
+      "status": "pending"
+    }
+  ],
+  "translation_config": {
+    "batch_size": 5,
+    "max_retries": 3,
+    "quality_level": "high",
+    "preserve_formatting": true,
+    "custom_glossary": {
+      "API": "应用程序接口",
+      "Cloud": "云",
+      "Database": "数据库"
+    }
+  }
+} 

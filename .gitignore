@@ -231,6 +231,9 @@ test-db.js
 /backend/services/*/google-credentials.json
 /Test/PDF_to_DOCX/google-credentials.json
 *-credentials.json
+**/seekhub-demo-*.json
+*.json.key
+service-account-*.json
 
 # Backup files
 *.bak

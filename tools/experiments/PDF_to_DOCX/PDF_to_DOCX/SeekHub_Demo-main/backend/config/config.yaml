@@ -1,0 +1,57 @@
+# SeekHub 翻译系统配置文件示例
+# 您可以复制此文件并根据需要修改配置
+
+# 数据库配置
+database:
+  project_id: "your-project-id"
+  database_id: "(default)"
+  credentials_path: "path/to/your/credentials.json"
+
+# 消息队列配置
+pubsub:
+  project_id: "your-project-id"
+  chapter_topic: "chapter-translation"
+  chapter_subscription: "chapter-translation-sub"
+  combination_topic: "combination-translation"
+  combination_subscription: "combination-translation-sub"
+
+# 云存储配置
+storage:
+  bucket_name: "your-storage-bucket"
+
+# Gemini AI配置
+gemini:
+  model: "gemini-1.5-flash"
+  max_retries: 3
+  rate_limit_delay: 1.0
+
+# 工作器配置
+worker:
+  max_workers: 4
+  worker_timeout: 300
+  max_concurrent_requests: 10
+  connection_pool_size: 20
+  batch_size: 5
+
+# 监控配置
+monitoring:
+  monitoring_interval: 5
+  health_check_interval: 30
+  log_level: "INFO"
+  log_file: "logs/seekhub.log"
+
+# 进程配置
+process:
+  worker_restart_delay: 5
+  max_worker_restarts: 5
+  process_timeout: 60
+
+# 告警配置
+alert:
+  alert_email: "admin@yourcompany.com"
+
+# GUI配置
+gui:
+  theme: "dark"
+  auto_refresh: true
+  refresh_interval: 2 
