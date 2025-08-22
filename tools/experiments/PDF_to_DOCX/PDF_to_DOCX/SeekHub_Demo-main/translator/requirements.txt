@@ -1,0 +1,4 @@
+fastapi
+uvicorn[standard]
+google-genai>=1.7.0
+tiktoken

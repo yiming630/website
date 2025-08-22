@@ -16,6 +16,7 @@ const typeDefs = require('./graphql/schema');
 const resolvers = require('./graphql/resolvers');
 const { createContext } = require('./middleware/context');
 const db = require('../database/connection');
+const createFileServeMiddleware = require('./src/middleware/fileServe');
 
 async function startServer() {
   const app = express();
@@ -63,13 +64,18 @@ async function startServer() {
 
   await server.start();
 
+  // Apply CORS globally for file serving
+  app.use(cors({
+    origin: process.env.NEXT_PUBLIC_API_URL?.replace('/graphql', '') || 'http://localhost:3000',
+    credentials: true
+  }));
+
+  // Apply file serving middleware
+  app.use(createFileServeMiddleware());
+
   // Apply middleware
   app.use(
     '/graphql',
-    cors({
-      origin: process.env.NEXT_PUBLIC_API_URL?.replace('/graphql', '') || 'http://localhost:3000',
-      credentials: true
-    }),
     json({ limit: '50mb' }),
     expressMiddleware(server, {
       context: createContext

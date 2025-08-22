@@ -1,0 +1,44 @@
+# SeekHub 翻译系统 - 优化版依赖
+
+# 核心依赖
+asyncio-throttle==1.0.2
+aiofiles==23.2.1
+
+# 系统监控
+psutil==5.9.6
+
+# Google Cloud 服务
+google-cloud-firestore==2.13.1
+google-cloud-pubsub==2.18.4
+google-cloud-storage==2.10.0
+google-auth==2.23.4
+
+# Gemini AI
+google-generativeai==0.3.2
+
+# 文档处理
+python-docx==1.1.0
+lxml==4.9.3
+
+# 文档格式转换 (可选)
+docx2pdf==0.1.8; platform_system=="Windows" or platform_system=="Darwin"
+mammoth==1.6.0
+pypandoc==1.11; platform_system!="Windows"
+
+# GUI界面 (可选)
+customtkinter==5.2.0
+# tkinter is included with Python, no need to install separately
+
+# 性能图表 (可选)
+matplotlib==3.8.1
+numpy==1.25.2
+
+# 开发工具 (可选)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.10.1
+flake8==6.1.0
+
+# 生产环境优化
+uvloop==0.18.0; platform_system!="Windows"
+orjson==3.9.9 

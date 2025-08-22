@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  seekhub-backend:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: seekhub-backend
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=INFO
+      - MAX_WORKERS=4
+      - MONITORING_INTERVAL=5
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../logs:/app/logs
+      - ../../config/credentials:/app/config/credentials:ro
+    networks:
+      - seekhub-network
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "python", "tools/health_check.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: seekhub-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - seekhub-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: seekhub-monitoring
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - seekhub-network
+
+networks:
+  seekhub-network:
+    driver: bridge
+
+volumes:
+  redis-data: 
