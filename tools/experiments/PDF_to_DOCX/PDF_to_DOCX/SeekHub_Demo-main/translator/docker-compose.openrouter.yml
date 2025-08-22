@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  translator:
+    build:
+      context: .
+      dockerfile: Dockerfile.openrouter
+    container_name: seekhub-translator-openrouter
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - APP_URL=${APP_URL:-http://localhost:3000}
+      - PORT=8000
+    restart: unless-stopped
+    networks:
+      - seekhub-network
+    volumes:
+      - ./logs:/app/logs  # 日志目录
+    labels:
+      - "com.seekhub.service=translator"
+      - "com.seekhub.provider=openrouter"
+
+networks:
+  seekhub-network:
+    driver: bridge
+    name: seekhub-network
