@@ -12,29 +12,24 @@ from .firestore_helper import db_helper, FirestoreContext, update_book_status
 from .pubsub_queue import queue_manager
 from .gemini_client import translator
 from .config import config
-from google.cloud import storage
+from .local_storage import LocalFileStorage
 
 class CloudTranslationOrchestrator:
     """Orchestrates book translation workflow using Firestore and Pub/Sub"""
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.gcs_client = storage.Client()
-        self.bucket_name = config.GCS_BUCKET_NAME if hasattr(config, 'GCS_BUCKET_NAME') else 'seekhub-translations'
+        # Replace GCS with local storage
+        self.storage_client = LocalFileStorage()
+        self.bucket_name = 'seekhub-translations'  # Kept for compatibility
         
     async def initialize(self):
         """Initialize cloud services"""
         await db_helper.connect()
         await queue_manager.initialize()
         
-        # Ensure GCS bucket exists
-        try:
-            self.bucket = self.gcs_client.bucket(self.bucket_name)
-            if not self.bucket.exists():
-                self.bucket = self.gcs_client.create_bucket(self.bucket_name)
-                self.logger.info(f"Created GCS bucket: {self.bucket_name}")
-        except Exception as e:
-            self.logger.error(f"Error with GCS bucket: {e}")
+        # Local storage is initialized automatically
+        self.logger.info(f"Using local storage at: {self.storage_client.storage_root}")
     
     def split_into_chapters(self, content: str) -> List[str]:
         """
@@ -115,9 +110,12 @@ class CloudTranslationOrchestrator:
                 book_doc["id"] = book_id
                 await db_helper.insert_document("books", book_doc, book_id)
             
-            # Upload original content to GCS
-            original_blob = self.bucket.blob(f"books/{book_id}/original.txt")
-            original_blob.upload_from_string(content, content_type="text/plain; charset=utf-8")
+            # Upload original content to local storage
+            original_path = self.storage_client.upload_string(
+                content, 
+                f"books/{book_id}/original.txt"
+            )
+            self.logger.info(f"Uploaded original content to: {original_path}")
             
             # Split into chapters
             chapters = self.split_into_chapters(content)
@@ -219,11 +217,14 @@ class CloudTranslationOrchestrator:
             bool: Success status
         """
         try:
-            # Upload translated text to GCS
+            # Upload translated text to local storage
             translated_text = translation_result.get('translated_text', '')
             if translated_text:
-                blob = self.bucket.blob(f"books/{book_id}/chapters/chapter_{chapter_index}_zh.txt")
-                blob.upload_from_string(translated_text, content_type="text/plain; charset=utf-8")
+                chapter_path = self.storage_client.upload_string(
+                    translated_text,
+                    f"books/{book_id}/chapters/chapter_{chapter_index}_zh.txt"
+                )
+                self.logger.info(f"Uploaded chapter translation to: {chapter_path}")
             
             # Update chapter document in Firestore
             chapters = await db_helper.find_documents(
@@ -274,15 +275,21 @@ class CloudTranslationOrchestrator:
             combined_text = []
             for chapter in chapters:
                 if chapter.get('status') == 'completed' and chapter.get('gcs_path'):
-                    blob = self.bucket.blob(chapter['gcs_path'])
-                    chapter_text = blob.download_as_text()
+                    # Extract relative path from the stored path
+                    relative_path = chapter['gcs_path']
+                    if relative_path.startswith(self.storage_client.public_url_base):
+                        relative_path = relative_path.replace(self.storage_client.public_url_base + '/', '')
+                    chapter_text = self.storage_client.download_string(relative_path)
                     combined_text.append(f"\n\n第 {chapter['chapter_index'] + 1} 章\n\n{chapter_text}")
             
             if combined_text:
                 # Upload combined translation
                 final_text = "".join(combined_text)
-                final_blob = self.bucket.blob(f"books/{book_id}/translated_zh.txt")
-                final_blob.upload_from_string(final_text, content_type="text/plain; charset=utf-8")
+                final_path = self.storage_client.upload_string(
+                    final_text,
+                    f"books/{book_id}/translated_zh.txt"
+                )
+                self.logger.info(f"Uploaded final translation to: {final_path}")
                 
                 # Update book status
                 await update_book_status(
