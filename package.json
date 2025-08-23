@@ -19,8 +19,10 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
     "dotenv": "^16.6.1",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "tailwind-merge": "^3.3.1"
   },
   "keywords": [],
   "author": "",
