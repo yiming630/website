@@ -125,6 +125,62 @@ const typeDefs = gql`
     system
   }
 
+  # Translation specific types from API.md
+  enum TranslationStyle {
+    GENERAL
+    ACADEMIC
+    BUSINESS
+    LEGAL
+    TECHNICAL
+    CREATIVE
+    MEDICAL
+    FINANCIAL
+  }
+
+  type Language {
+    code: String!
+    name: String!
+    nativeName: String!
+    isAutoDetected: Boolean!
+    supportedAsSource: Boolean!
+    supportedAsTarget: Boolean!
+  }
+
+  type TranslationSpecialization {
+    key: String!
+    title: String!
+    description: String!
+    requiresExpertise: Boolean!
+  }
+
+  type TranslationProgress {
+    documentId: ID!
+    status: DocumentStatus!
+    progress: Int!
+    currentStep: String!
+    estimatedTimeRemaining: Int
+    error: String
+  }
+
+  type TranslationResult {
+    originalText: String!
+    translatedText: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    style: String!
+    createdAt: String!
+  }
+
+  type TranslationImprovement {
+    originalText: String!
+    originalTranslation: String!
+    improvedTranslation: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    feedback: String
+    createdAt: String!
+  }
+
   # Translation segment type definitions
   type TranslationSegment {
     id: ID!
@@ -197,6 +253,34 @@ const typeDefs = gql`
     isEdited: Boolean
   }
 
+  # Translation API specific inputs
+  input UploadDocumentInput {
+    title: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    translationStyle: TranslationStyle!
+    specialization: String!
+    projectId: ID
+    fileUrl: String!
+    fileSize: Int
+    fileType: String
+  }
+
+  input TranslateTextInput {
+    text: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    style: String
+  }
+
+  input ImproveTranslationInput {
+    originalText: String!
+    currentTranslation: String!
+    sourceLanguage: String!
+    targetLanguage: String!
+    feedback: String
+  }
+
   # Query definitions
   type Query {
     # User queries
@@ -222,6 +306,11 @@ const typeDefs = gql`
 
     # System queries
     systemStats: SystemStats
+
+    # Translation API queries
+    supportedLanguages: [Language!]!
+    translationSpecializations: [TranslationSpecialization!]!
+    translationHistory(limit: Int): [TranslationJob!]!
   }
 
   type SystemStats {
@@ -261,11 +350,18 @@ const typeDefs = gql`
     # Chat mutations
     sendChatMessage(input: SendChatMessageInput!): ChatMessage!
     clearChatHistory(documentId: ID!): Boolean!
+
+    # Translation API mutations
+    uploadDocument(input: UploadDocumentInput!): Document!
+    translateText(input: TranslateTextInput!): TranslationResult!
+    improveTranslation(input: ImproveTranslationInput!): TranslationImprovement!
+    retranslateDocument(documentId: ID!, targetLanguage: String, translationStyle: TranslationStyle): Document!
   }
 
   # Subscription definitions (for real-time updates)
   type Subscription {
-    translationProgress(documentId: ID!): TranslationJob!
+    translationProgress(documentId: ID!): TranslationProgress!
+    documentUpdated(documentId: ID!): Document!
     newChatMessage(documentId: ID!): ChatMessage!
   }
 `;

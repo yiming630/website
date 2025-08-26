@@ -8,6 +8,7 @@ const authResolvers = require('./auth');
 const userResolvers = require('./user');
 const projectResolvers = require('./project');
 const documentResolvers = require('./document');
+const translationResolvers = require('./translation');
 
 const resolvers = {
   // Scalar resolvers
@@ -20,6 +21,7 @@ const resolvers = {
     ...userResolvers.Query,
     ...projectResolvers.Query,
     ...documentResolvers.Query,
+    ...translationResolvers.Query,
     
     // System stats
     systemStats: async (_, __, { db }) => {
@@ -46,13 +48,17 @@ const resolvers = {
     ...authResolvers.Mutation,
     ...userResolvers.Mutation,
     ...projectResolvers.Mutation,
-    ...documentResolvers.Mutation
+    ...documentResolvers.Mutation,
+    ...translationResolvers.Mutation
   },
 
   // Type resolvers (field resolvers)
   User: userResolvers.User,
   Project: projectResolvers.Project,
-  Document: documentResolvers.Document
+  Document: documentResolvers.Document,
+  
+  // Add Subscription resolvers if available
+  ...(translationResolvers.Subscription ? { Subscription: translationResolvers.Subscription } : {})
 };
 
 module.exports = resolvers;
