@@ -1,5 +1,6 @@
 const openRouterService = require('../utils/openRouterService');
 const LocalFileStorage = require('../../../../src/core/localFileStorage');
+const { queueManager } = require('../../src/core/queueManager');
 const { v4: uuidv4 } = require('uuid');
 
 // Initialize local storage
@@ -178,13 +179,27 @@ const translationResolver = {
           detectedLanguage = detectLanguage(text);
         }
 
-        // Translate using OpenRouter
-        const translatedText = await openRouterService.translateText(
-          text,
-          detectedLanguage,
-          targetLanguage,
-          style
-        );
+        // 对于直接文本翻译，仍然使用同步方式以便立即返回结果
+        // 但也可以选择使用队列进行异步处理
+        let translatedText;
+        
+        const useQueue = process.env.USE_QUEUE_FOR_TEXT_TRANSLATION === 'true';
+        
+        if (useQueue) {
+          // 使用队列异步处理
+          const messageId = await queueManager.publishTextTranslation(
+            text, detectedLanguage, targetLanguage, style
+          );
+          translatedText = `Translation queued with ID: ${messageId}`;
+        } else {
+          // 同步处理以便立即返回结果
+          translatedText = await openRouterService.translateText(
+            text,
+            detectedLanguage,
+            targetLanguage,
+            style
+          );
+        }
 
         return {
           originalText: text,
@@ -211,13 +226,27 @@ const translationResolver = {
           feedback
         } = input;
 
-        const improvedTranslation = await openRouterService.improveTranslation(
-          originalText,
-          currentTranslation,
-          sourceLanguage,
-          targetLanguage,
-          feedback
-        );
+        // 翻译改进可以使用队列或同步处理
+        let improvedTranslation;
+        
+        const useQueue = process.env.USE_QUEUE_FOR_IMPROVEMENT === 'true';
+        
+        if (useQueue) {
+          // 使用队列异步处理
+          const messageId = await queueManager.publishTranslationImprovement(
+            originalText, currentTranslation, sourceLanguage, targetLanguage, feedback
+          );
+          improvedTranslation = `Improvement queued with ID: ${messageId}`;
+        } else {
+          // 同步处理
+          improvedTranslation = await openRouterService.improveTranslation(
+            originalText,
+            currentTranslation,
+            sourceLanguage,
+            targetLanguage,
+            feedback
+          );
+        }
 
         return {
           originalText,
@@ -375,95 +404,45 @@ const translationResolver = {
   }
 };
 
-// Helper function to process translation
+// Helper function to process translation using queue system
 async function processTranslation(documentId, sourceLanguage, targetLanguage, style) {
   try {
-    // Process translation in steps
-    const steps = [
-      { name: '文档分割中', progress: 20 },
-      { name: '提交给AI翻译', progress: 50 },
-      { name: '文档整合中', progress: 80 },
-      { name: '自动排版与优化', progress: 100 }
-    ];
-
-    for (const step of steps) {
-      if (step.name === '提交给AI翻译') {
-        // Perform actual translation using OpenRouter
-        // In production, would read file content and translate chunks
-        try {
-          // Simulate getting document content
-          const sampleText = 'This is a sample document content to translate.';
-          
-          const translatedText = await openRouterService.translateText(
-            sampleText,
-            sourceLanguage === 'auto' ? 'en' : sourceLanguage,
-            targetLanguage,
-            style?.toLowerCase() || 'general'
-          );
-          
-          // Save translated content
-          const outputKey = `translations/${documentId}/translated.txt`;
-          await localStorage.uploadString(translatedText, outputKey);
-          
-        } catch (translationError) {
-          console.error('Translation error:', translationError);
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-
-    // Generate final document URL
-    const outputKey = `translations/${documentId}/translated.pdf`;
-    await localStorage.uploadString(
-      'Final translated document content',
-      outputKey
+    // 发布文档翻译任务到队列
+    const messageId = await queueManager.publishDocumentTranslation(
+      documentId,
+      sourceLanguage === 'auto' ? 'en' : sourceLanguage,
+      targetLanguage,
+      style?.toLowerCase() || 'general'
     );
+    
+    console.log(`Document translation task published: ${messageId}`);
     
   } catch (error) {
     console.error('Translation processing error:', error);
   }
 }
 
-// Helper function to process document translation
+// Helper function to process document translation using queue system
 async function processDocumentTranslation(jobId, documentId, targetLanguage, style) {
   try {
-    const job = translationJobs.get(jobId);
-    if (!job) return;
-
-    // Simulate translation steps
-    const steps = [
-      { name: '文档分割中', progress: 20 },
-      { name: '提交给AI翻译', progress: 50 },
-      { name: '文档整合中', progress: 80 },
-      { name: '自动排版与优化', progress: 100 }
-    ];
-
-    for (const step of steps) {
-      job.progress_percentage = step.progress;
-      job.currentStep = step.name;
-      job.status = step.progress === 100 ? 'completed' : 'running';
-      
-      if (step.name === '提交给AI翻译') {
-        // Perform actual translation using OpenRouter
-        // In production, this would read document content and translate it
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-
-    // Generate download URL
-    const outputKey = `translations/${jobId}/translated.pdf`;
-    job.downloadUrl = await localStorage.uploadString(
-      'Translated document content',
-      outputKey
+    // 发布文档翻译任务到队列
+    const messageId = await queueManager.publishDocumentTranslation(
+      documentId,
+      'auto', // 会在处理时检测
+      targetLanguage,
+      style?.toLowerCase() || 'general'
     );
     
-    job.completed_at = new Date().toISOString();
-    job.status = 'completed';
+    console.log(`Document translation task published: ${messageId} for job ${jobId}`);
+    
+    // 更新作业状态
+    const job = translationJobs.get(jobId);
+    if (job) {
+      job.status = 'running';
+      job.progress_percentage = 10;
+      job.currentStep = '任务已提交到队列';
+    }
+    
   } catch (error) {
     console.error('Document translation error:', error);
     const job = translationJobs.get(jobId);

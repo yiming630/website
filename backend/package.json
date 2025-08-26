@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node -e \"console.log('API test endpoint: http://127.0.0.1:4000/graphql')\""
+    "test": "node -e \"console.log('API test endpoint: http://127.0.0.1:4000/graphql')\"",
+    "test:translation": "node test-translation-api.js",
+    "test:queue": "node test-postgres-queue.js",
+    "worker:translation": "node src/workers/translationWorker.js",
+    "worker:dev": "nodemon src/workers/translationWorker.js"
   },
   "dependencies": {
     "@apollo/server": "^4.10.0",
