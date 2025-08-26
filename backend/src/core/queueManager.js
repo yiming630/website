@@ -4,6 +4,7 @@
  */
 
 const PostgreSQLQueue = require('./postgresQueue');
+const RedisQueue = require('./redisQueue');
 const EventEmitter = require('events');
 
 /**
@@ -187,6 +188,10 @@ class QueueManager {
           this.queue = new PostgreSQLQueue();
           break;
           
+        case 'redis':
+          this.queue = new RedisQueue();
+          break;
+          
         case 'memory':
         case 'inmemory':
           this.queue = new MemoryQueue();
@@ -367,5 +372,6 @@ module.exports = {
   QueueManager,
   queueManager,
   PostgreSQLQueue,
+  RedisQueue,
   MemoryQueue
 };

@@ -9,14 +9,18 @@
     "test": "node -e \"console.log('API test endpoint: http://127.0.0.1:4000/graphql')\"",
     "test:translation": "node test-translation-api.js",
     "test:queue": "node test-postgres-queue.js",
+    "test:redis": "node test-redis-queue.js",
     "worker:translation": "node src/workers/translationWorker.js",
-    "worker:dev": "nodemon src/workers/translationWorker.js"
+    "worker:redis": "node src/workers/redisTranslationWorker.js",
+    "worker:dev": "nodemon src/workers/translationWorker.js",
+    "worker:redis-dev": "nodemon src/workers/redisTranslationWorker.js"
   },
   "dependencies": {
     "@apollo/server": "^4.10.0",
     "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
+    "bull": "^4.16.5",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
     "dotenv": "^16.6.1",
@@ -25,6 +29,7 @@
     "graphql-scalars": "^1.22.4",
     "graphql-tag": "^2.12.6",
     "graphql-upload": "^16.0.2",
+    "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
     "uuid": "^11.1.0"
