@@ -1,1179 +1,586 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
-import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { DocumentUpload } from "@/components/DocumentUpload"
 import {
   Mountain,
-  FileIcon,
-  X,
-  Wand2,
-  Paintbrush,
-  Atom,
-  Landmark,
-  Briefcase,
-  UploadCloud,
-  ThumbsUp,
-  ThumbsDown,
-  Languages,
-  FileText,
-  FileDiff,
-  Plus,
   Search,
-  Settings,
+  Filter,
+  Upload,
+  FileText,
+  MoreVertical,
   Download,
-  Share2,
-  RotateCcw,
   Trash2,
-  Play,
-  HelpCircle,
-  Zap,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-  Crown,
-  MessageCircle,
-  Bell,
-  TrendingUp,
-  Award,
-  Target,
-  Lightbulb,
+  Share2,
   Eye,
-  MoreHorizontal,
-  Pin,
-  Edit,
-  Edit3,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  RefreshCw,
+  LogOut,
+  User,
+  Loader2,
 } from "lucide-react"
 import Link from "next/link"
-import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { useFile as useFileContext } from "@/context/file-context"
-import type React from "react"
-
-// 模拟历史翻译记录数据
-const mockHistory = [
-  {
-    id: 1,
-    title: "商业计划书_2024.pdf",
-    sourceLanguage: "中文",
-    targetLanguage: "英语",
-    status: "completed",
-    time: "5分钟前",
-    pages: 15,
-    size: "2.3 MB",
-    category: "商业翻译",
-  },
-  {
-    id: 2,
-    title: "技术文档_API说明.docx",
-    sourceLanguage: "英语",
-    targetLanguage: "中文",
-    status: "completed",
-    time: "2小时前",
-    pages: 8,
-    size: "1.8 MB",
-    category: "科技翻译",
-  },
-  {
-    id: 3,
-    title: "法律合同_保密协议.pdf",
-    sourceLanguage: "英语",
-    targetLanguage: "中文",
-    status: "processing",
-    time: "1天前",
-    pages: 12,
-    size: "0.9 MB",
-    category: "法律翻译",
-  },
-  {
-    id: 4,
-    title: "学术论文_机器学习.pdf",
-    sourceLanguage: "英语",
-    targetLanguage: "中文",
-    status: "completed",
-    time: "3天前",
-    pages: 25,
-    size: "4.2 MB",
-    category: "学术翻译",
-  },
-  {
-    id: 5,
-    title: "营销材料_产品手册.pptx",
-    sourceLanguage: "中文",
-    targetLanguage: "英语",
-    status: "failed",
-    time: "1周前",
-    pages: 20,
-    size: "5.1 MB",
-    category: "营销翻译",
-  },
-]
-
-// 翻译专业领域配置
-const specializations = [
-  {
-    key: "tech_sci",
-    title: "技术与科学领域",
-    icon: Atom,
-    description: "要求极高的准确性、术语统一和深厚的专业背景知识。",
-    subCategories: [
-      { key: "tech", title: "科技翻译", description: "IT、软件本地化、工程、电信、专利等。" },
-      { key: "medical", title: "医学与生命科学翻译", description: "医药、医疗器械、学术论文、病历等。" },
-    ],
-  },
-  {
-    key: "legal_financial",
-    title: "法律与金融领域",
-    icon: Landmark,
-    description: "对准确性的要求达到极致，任何偏差都可能导致严重后果。",
-    subCategories: [
-      { key: "legal", title: "法律翻译", description: "合同协议、司法文书、法规、认证公证等。" },
-      { key: "financial", title: "金融翻译", description: "公司财报、投资证券、银行保险文件等。" },
-    ],
-  },
-  {
-    key: "creative_humanities",
-    title: "创意与人文领域",
-    icon: Paintbrush,
-    description: "注重传达原文的风格、情感、文化内涵和艺术价值。",
-    subCategories: [
-      { key: "literary", title: "文学与影音翻译", description: "小说诗歌、戏剧、电影字幕、配音等。" },
-      { key: "marketing", title: "营销与游戏本地化", description: "广告创译、品牌故事、游戏对话剧情等。" },
-      { key: "humanities", title: "人文社科翻译", description: "历史、哲学、政治、新闻、教育等。" },
-    ],
-  },
-  {
-    key: "business_personal",
-    title: "商业与个人领域",
-    icon: Briefcase,
-    description: "涵盖日常商业沟通和用于官方用途的个人文件。",
-    subCategories: [
-      { key: "business", title: "商业翻译", description: "内外部沟通、电子商务、市场报告等。" },
-      { key: "personal", title: "个人文档翻译", description: "证件、证书、成绩单（通常需认证）。" },
-    ],
-  },
-]
-
-// 支持的文件格式
-const supportedFormats = ["pdf", "docx", "epub", "txt", "mobi", "azw"]
-const supportedMimeTypes = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/epub+zip",
-  "text/plain",
-  "application/x-mobipocket-ebook",
-  "application/vnd.amazon.ebook",
-]
-
-// 翻译处理步骤模拟 - 更新为新的四个步骤
-const translationSteps = [
-  { status: "文档分割中...", duration: 2000 },
-  { status: "提交给AI翻译...", duration: 3000 },
-  { status: "文档整合中...", duration: 2500 },
-  { status: "自动排版与优化...", duration: 2000 },
-]
-
-// 翻译风格预设
-const translationStyles = [
-  { key: "general", title: "通用", description: "适合大多数文档的标准翻译风格" },
-  { key: "academic", title: "学术", description: "严谨的学术论文翻译风格" },
-  { key: "business", title: "商务", description: "正式的商务文档翻译风格" },
-]
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useAuth } from "@/hooks/useAuth"
+import { useDocuments } from "@/hooks/useDocuments"
+import { DocumentStatus, TranslationStyle } from "@/types/graphql"
 
 /**
- * 工作台页面主组件
- * 包含左侧项目列表、中央工作区和右侧用户面板
+ * 工作台页面组件
+ * 连接到GraphQL后端管理文档
  */
 export default function WorkspacePage() {
   const router = useRouter()
-  
-  // 获取用户类型
-  const [userType, setUserType] = useState<'reader' | 'professional' | null>(null)
-  
-  // 文件相关状态
-  const { file: contextFile, setFile: setContextFile } = useFileContext()
-  const [file, setFile] = useState<File | null>(contextFile)
-  const [error, setError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { user, isAuthenticated, logout, loading: authLoading } = useAuth()
+  const { 
+    documents, 
+    loading: docsLoading, 
+    error: docsError, 
+    deleteDocument,
+    searchDocuments,
+    refetch 
+  } = useDocuments()
 
-  // 翻译流程状态
-  const [pageState, setPageState] = useState("upload") // upload | reading | configuring | translating | completed
-  const [translationProgress, setTranslationProgress] = useState(0)
-  const [translationStatus, setTranslationStatus] = useState("")
-  const [currentStepIndex, setCurrentStepIndex] = useState(0) // 当前步骤索引
-  const [conversionCompleted, setConversionCompleted] = useState(false) // 转换完成状态
+  // 页面状态
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [sortBy, setSortBy] = useState<string>("date")
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
-
-  // 翻译配置状态
-  const [selectedMajorCategory, setSelectedMajorCategory] = useState<string | null>(null)
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null)
-  const [showSubCategories, setShowSubCategories] = useState(false)
-  const [sourceLanguage, setSourceLanguage] = useState("auto")
-  const [targetLanguage, setTargetLanguage] = useState("")
-  const [outputFormat, setOutputFormat] = useState("docx")
-  const [translationStyle, setTranslationStyle] = useState("general")
-
-  // UI 交互状态
-  const [feedback, setFeedback] = useState<"good" | "bad" | null>(null)
-  const [showFeedbackInput, setShowFeedbackInput] = useState(false)
-  const [previewMode, setPreviewMode] = useState<"side-by-side" | "single">("side-by-side")
-  const [selectedTask, setSelectedTask] = useState<any>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [centerState, setCenterState] = useState<"welcome" | "dashboard" | "task-detail" | "new-translation">("welcome")
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null)
-  const [isHovered, setIsHovered] = useState(false) // 控制右侧面板的悬停状态
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null) // 用于延迟隐藏面板的定时器
-
-  // 模拟用户数据
-  const [userData] = useState({
-    name: "用户",
-    plan: "免费体验版",
-    usedQuota: 7500,
-    totalQuota: 10000,
-    tasksCompleted: 25,
-    wordsTranslated: 80000,
-    timeSaved: 12,
-  })
-
-  // 监听全局文件状态变化
+  // 检查认证状态
   useEffect(() => {
-    if (contextFile) {
-      handleFileSelect(contextFile)
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login")
     }
-  }, [contextFile])
+  }, [authLoading, isAuthenticated, router])
 
-  // 获取用户类型
-  useEffect(() => {
-    const type = localStorage.getItem('userType') as 'reader' | 'professional'
-    setUserType(type || 'professional') // 默认为专业译者
-  }, [])
-
-  // 根据当前状态决定中央面板显示内容
-  useEffect(() => {
-    if (pageState === "upload" || pageState === "reading" || (file && pageState === "configuring")) {
-      setCenterState("new-translation")
-    } else if (selectedTask) {
-      setCenterState("task-detail")
-    } else if (mockHistory.length > 0) {
-      setCenterState("dashboard")
+  // 处理文档搜索
+  const handleSearch = async () => {
+    if (searchQuery) {
+      await searchDocuments(searchQuery)
     } else {
-      setCenterState("welcome")
-    }
-  }, [file, pageState, selectedTask, mockHistory.length])
-
-  /**
-   * 处理文件选择
-   * 验证文件格式并设置相关状态
-   */
-  const handleFileSelect = (selectedFile: File | null) => {
-    if (!selectedFile) return
-
-    // 验证文件格式
-    const fileExtension = selectedFile.name.split(".").pop()?.toLowerCase()
-    if (
-      !fileExtension ||
-      !supportedFormats.includes(fileExtension) ||
-      !supportedMimeTypes.includes(selectedFile.type)
-    ) {
-      setError("对不起，但是我们正在努力研发，后期会更新支持上传新的格式！")
-      setFile(null)
-      setContextFile(null)
-      return
-    }
-
-    // 重置所有状态
-    setError(null)
-    setFile(selectedFile)
-    setContextFile(selectedFile)
-    setPageState("reading")
-    setTranslationProgress(0)
-    setSelectedMajorCategory(null)
-    setSelectedSubCategory(null)
-    setShowSubCategories(false)
-    setFeedback(null)
-    setShowFeedbackInput(false)
-    setSelectedTask(null)
-    setConversionCompleted(false)
-
-    // 模拟文档读取过程，2秒后进入配置页面
-    setTimeout(() => {
-      setPageState("configuring")
-    }, 2000)
-  }
-
-  // 文件输入事件处理
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileSelect(e.target.files?.[0] || null)
-  }
-
-  // 拖拽事件处理
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault()
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    handleFileSelect(e.dataTransfer.files?.[0] || null)
-  }
-
-  /**
-   * 处理主要类别选择
-   * 显示子类别选项
-   */
-  const handleMajorCategorySelect = (key: string) => {
-    setSelectedMajorCategory(key)
-    setSelectedSubCategory(null)
-    setShowSubCategories(true)
-  }
-
-  /**
-   * 开始翻译处理
-   * 验证配置并启动翻译流程
-   */
-  const handleStartTranslation = () => {
-    // 如果目标语言为空，使用默认值（英文）
-    const finalTargetLanguage = targetLanguage.trim() || "英文"
-    router.push("/translating")
-  }
-
-
-
-  /**
-   * 重置所有状态
-   * 清理文件和翻译相关状态
-   */
-  const resetAll = () => {
-    setFile(null)
-    setContextFile(null)
-    setPageState("upload")
-    setTranslationProgress(0)
-    setSelectedMajorCategory(null)
-    setSelectedSubCategory(null)
-    setShowSubCategories(false)
-    setFeedback(null)
-    setShowFeedbackInput(false)
-    setError(null)
-    setSelectedTask(null)
-    setCurrentStepIndex(0)
-    setConversionCompleted(false)
-    setTargetLanguage("")
-  }
-
-  /**
-   * 获取状态图标
-   * 根据任务状态返回对应的图标组件
-   */
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-      case "processing":
-        return <AlertCircle className="h-4 w-4 text-blue-500" />
-      case "failed":
-        return <XCircle className="h-4 w-4 text-red-500" />
-      default:
-        return <Clock className="h-4 w-4 text-gray-400" />
+      await refetch()
     }
   }
 
-  /**
-   * 获取状态文本
-   * 根据状态返回中文描述
-   */
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "已完成"
-      case "processing":
-        return "处理中"
-      case "failed":
-        return "失败"
-      default:
-        return "未知"
+  // 处理文档删除
+  const handleDelete = async (documentId: string) => {
+    if (!confirm("确定要删除这个文档吗？")) return
+    
+    setIsDeleting(documentId)
+    try {
+      await deleteDocument(documentId)
+      setSelectedDocument(null)
+    } catch (error) {
+      console.error("删除文档失败:", error)
+    } finally {
+      setIsDeleting(null)
     }
   }
 
-  // 过滤历史记录
-  const filteredHistory = mockHistory.filter((item) => item.title.toLowerCase().includes(searchTerm.toLowerCase()))
+  // 处理文档预览
+  const handlePreview = (documentId: string) => {
+    router.push(`/preview?id=${documentId}`)
+  }
 
-  /**
-   * 渲染左侧项目面板
-   * 包含项目列表、搜索和操作菜单
-   */
-  const renderLeftPanel = () => (
-    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
-      {/* 头部 */}
-      <div className="p-4 border-b border-gray-200">
-        <Link href="/" className="flex items-center gap-2 mb-4">
-          <Mountain className="h-6 w-6 text-blue-600" />
-          <span className="font-semibold text-gray-900">格式译专家</span>
-        </Link>
-        <Button
-          onClick={() => {
-            resetAll()
-            setCenterState("new-translation")
-          }}
-          className="w-full justify-start gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Plus className="h-4 w-4" />
-          新建翻译
-        </Button>
-      </div>
+  // 处理文档下载
+  const handleDownload = (document: any) => {
+    // 如果有下载链接，直接下载
+    if (document.downloadLinks?.length > 0) {
+      const link = document.downloadLinks[0]
+      window.open(link.url, '_blank')
+    } else {
+      alert("文档还未准备好下载，请稍后再试")
+    }
+  }
 
-      {/* 居中标题 */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 text-center">历史项目管理</h3>
-      </div>
+  // 处理登出
+  const handleLogout = async () => {
+    await logout()
+    router.push("/login")
+  }
 
-      {/* 搜索框 */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <input
-            type="text"
-            placeholder="搜索翻译记录"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-
-      {/* 任务列表 */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-2">
-          {filteredHistory.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">暂无翻译记录</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {filteredHistory.map((item) => (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "p-3 rounded-lg cursor-pointer transition-all duration-200 group relative",
-                    selectedTask?.id === item.id
-                      ? "bg-blue-50 border border-blue-200"
-                      : "hover:bg-gray-50 border border-transparent",
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0" onClick={() => setSelectedTask(item)}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FileIcon className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">
-                            {item.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            {getStatusIcon(item.status)}
-                            <span className="text-xs text-gray-500">{getStatusText(item.status)}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                            <span>
-                              {item.sourceLanguage} → {item.targetLanguage}
-                            </span>
-                            <span>•</span>
-                            <span>{item.time}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 三点菜单 */}
-                    <div className="relative">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOpenDropdown(openDropdown === item.id ? null : item.id)
-                        }}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-
-                      {/* 下拉菜单 */}
-                      {openDropdown === item.id && (
-                        <div className="absolute right-0 top-8 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-                          <button
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenDropdown(null)
-                              // 处理分享操作
-                            }}
-                          >
-                            <Share2 className="h-3 w-3" />
-                            分享
-                          </button>
-                          <button
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenDropdown(null)
-                              // 处理置顶操作
-                            }}
-                          >
-                            <Pin className="h-3 w-3" />
-                            置顶
-                          </button>
-                          <button
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenDropdown(null)
-                              // 处理重命名操作
-                            }}
-                          >
-                            <Edit className="h-3 w-3" />
-                            重命名
-                          </button>
-                          <button
-                            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenDropdown(null)
-                              // 处理删除操作
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            删除
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-
-  /**
-   * 渲染右侧用户面板
-   * 浮动头像和悬停显示的用户信息面板
-   */
-  const renderRightPanel = () => {
-    // 鼠标进入头像区域，清除定时器并显示面板
-    const handleAvatarMouseEnter = () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
+  // 筛选和排序文档
+  const filteredDocuments = documents
+    .filter((doc) => {
+      // 状态筛选
+      if (filterStatus !== "all" && doc.status !== filterStatus) {
+        return false
       }
-      setIsHovered(true)
-    }
-
-    // 鼠标离开头像区域，设置定时器延迟隐藏面板
-    const handleAvatarMouseLeave = () => {
-      hoverTimeoutRef.current = setTimeout(() => {
-        setIsHovered(false)
-      }, 200) // 200ms 延迟，给鼠标移动到面板的时间
-    }
-
-    // 鼠标进入面板区域，清除定时器，保持面板显示
-    const handlePanelMouseEnter = () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
+      // 搜索筛选
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        return (
+          doc.title.toLowerCase().includes(query) ||
+          doc.sourceLanguage.toLowerCase().includes(query) ||
+          doc.targetLanguage.toLowerCase().includes(query)
+        )
       }
-    }
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === "date") {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      } else if (sortBy === "name") {
+        return a.title.localeCompare(b.title)
+      } else if (sortBy === "status") {
+        return a.status.localeCompare(b.status)
+      }
+      return 0
+    })
 
-    // 鼠标离开面板区域，立即隐藏面板
-    const handlePanelMouseLeave = () => {
-      setIsHovered(false)
-    }
-
-    return (
-      <div className="relative">
-        {/* 浮动头像和悬停面板的共同容器 */}
-        <div
-          className="fixed top-4 right-4 z-50"
-          onMouseEnter={handleAvatarMouseEnter}
-          onMouseLeave={handleAvatarMouseLeave}
-        >
-          <Avatar className="h-10 w-10 cursor-pointer border-2 border-white shadow-lg">
-            <AvatarImage src="/placeholder.svg?height=40&width=40" />
-            <AvatarFallback className="bg-blue-100 text-blue-600">用</AvatarFallback>
-          </Avatar>
-
-          {/* 悬停面板 */}
-          {isHovered && (
-            <div
-              className="absolute top-12 right-0 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200"
-              onMouseEnter={handlePanelMouseEnter} // 鼠标进入面板时，保持显示
-              onMouseLeave={handlePanelMouseLeave} // 鼠标离开面板时，隐藏
-            >
-              {/* 账户状态和使用情况 */}
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                    <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">用</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 text-sm">欢迎，{userData.name}</p>
-                    <p className="text-xs text-gray-500">{userData.plan}</p>
-                  </div>
-                  <Crown className="h-4 w-4 text-yellow-500" />
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-gray-600">本月免费额度</span>
-                      <span className="text-xs text-gray-900 font-medium">
-                        {userData.usedQuota.toLocaleString()} / {userData.totalQuota.toLocaleString()} 字
-                      </span>
-                    </div>
-                    <Progress value={(userData.usedQuota / userData.totalQuota) * 100} className="h-2" />
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent"
-                  >
-                    <Zap className="h-3 w-3 mr-1" />
-                    升级套餐
-                  </Button>
-                </div>
-              </div>
-
-              {/* 帮助与支持 */}
-              <div className="p-4 space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">帮助与支持</h3>
-                  <div className="space-y-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start text-gray-600 hover:text-gray-900"
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      快速入门指南
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start text-gray-600 hover:text-gray-900"
-                    >
-                      <HelpCircle className="h-4 w-4 mr-2" />
-                      常见问题
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start text-gray-600 hover:text-gray-900"
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      联系客服
-                    </Button>
-                  </div>
-                </div>
-
-                {/* 新功能提示 */}
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Bell className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">新功能</span>
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  </div>
-                  <p className="text-xs text-blue-700">现在支持PowerPoint翻译，完美保留动画效果！</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    )
+  // 加载状态
+  if (authLoading) {
+    return <WorkspaceSkeleton />
   }
 
-  /**
-   * 渲染中央面板
-   * 根据当前状态显示不同的内容
-   */
-  const renderCenterPanel = () => {
-
-    // 根据中央状态渲染不同内容
-    switch (centerState) {
-      case "welcome":
-        // 欢迎页面
-        return (
-          <div className="flex items-center justify-center h-full p-8">
-            <div className="max-w-2xl text-center">
-              <div className="mb-8">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Wand2 className="w-10 h-10 text-blue-600" />
-                </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">欢迎您，{userData.name}！</h1>
-                <p className="text-lg text-gray-600">准备好体验前所未有的文档翻译了吗？</p>
-              </div>
-
-              {/* 使用步骤说明 */}
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <UploadCloud className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">上传文档</h3>
-                  <p className="text-sm text-gray-600">从右侧拖入您的第一个文件</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Settings className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">配置翻译</h3>
-                  <p className="text-sm text-gray-600">选择目标语言和专业领域</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Download className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">下载成品</h3>
-                  <p className="text-sm text-gray-600">预览并下载格式完美的译文</p>
-                </div>
-              </div>
-
-              {/* 快速入门提示 */}
-              <Card className="bg-blue-50 border-blue-200 p-6">
-                <div className="flex items-center gap-4">
-                  <Play className="w-8 h-8 text-blue-600 flex-shrink-0" />
-                  <div className="text-left">
-                    <h3 className="font-semibold text-blue-900 mb-1">观看2分钟视频，快速上手</h3>
-                    <p className="text-sm text-blue-700">了解如何充分利用格式译专家的强大功能</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-        )
-
-      case "dashboard":
-        // 工作台仪表板
-        return (
-          <div className="p-8 h-full overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">欢迎回来，{userData.name}！</h1>
-                <p className="text-gray-600">这里是您的翻译工作中心</p>
-              </div>
-
-              {/* 快速上传区域 */}
-              <Card className="mb-8 bg-blue-50 border-blue-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <UploadCloud className="w-8 h-8 text-blue-600" />
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900">快速上传</h2>
-                      <p className="text-gray-600">拖拽文件到此处，或点击选择文件开始翻译</p>
-                    </div>
-                  </div>
-                  <div
-                    className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition-colors group"
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <UploadCloud className="w-12 h-12 text-blue-400 mb-4 group-hover:text-blue-500 transition-colors" />
-                    <p className="text-lg font-semibold text-blue-700 mb-2">拖拽文件到此处，或点击上传</p>
-                    <p className="text-sm text-blue-500">支持 PDF, DOCX, EPUB, TXT, MOBI, AZW 格式</p>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      className="hidden"
-                      accept={supportedMimeTypes.join(",")}
-                    />
-                  </div>
-                  {error && (
-                    <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded-lg">
-                      <p className="text-red-700 text-center">{error}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* 效率看板 */}
-              <Card className="mb-8 bg-gradient-to-r from-blue-50 to-emerald-50 border-blue-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <TrendingUp className="w-8 h-8 text-blue-600" />
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900">效率看板</h2>
-                      <p className="text-gray-600">您的翻译成就一览</p>
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">{userData.tasksCompleted}</div>
-                      <div className="text-sm text-gray-600">份文档已翻译</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-emerald-600 mb-1">
-                        {userData.wordsTranslated.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">字符已处理</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">{userData.timeSaved}</div>
-                      <div className="text-sm text-gray-600">小时时间节省</div>
-                    </div>
-                  </div>
-                  <div className="mt-4 p-4 bg-white rounded-lg border border-blue-200">
-                    <p className="text-sm text-gray-700">
-                      <strong>上个月</strong>，我们为您翻译了 <strong>{userData.tasksCompleted} 份文档</strong>，
-                      累计处理 <strong>{userData.wordsTranslated.toLocaleString()} 字符</strong>， 预估为您节省了约{" "}
-                      <strong>{userData.timeSaved} 小时</strong> 的人工排版时间。
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 专业提示 */}
-              <Card className="mb-8 bg-yellow-50 border-yellow-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Lightbulb className="w-6 h-6 text-yellow-600" />
-                    <h3 className="font-semibold text-yellow-900">专业提示</h3>
-                  </div>
-                  <p className="text-yellow-800">
-                    <strong>小技巧：</strong>您知道吗？翻译PPT时，我们会完整保留您的演讲者备注和动画效果。
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )
-
-      case "task-detail":
-        // 任务详情页面
-        if (!selectedTask) return null
-        return (
-          <div className="p-6 h-full overflow-y-auto">
-            <div className="max-w-6xl mx-auto">
-              {/* 任务头部 */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedTask(null)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    ← 返回
-                  </Button>
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{selectedTask.title}</h1>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                      <span>
-                        {selectedTask.sourceLanguage} → {selectedTask.targetLanguage}
-                      </span>
-                      <span>•</span>
-                      <span>{selectedTask.pages} 页</span>
-                      <span>•</span>
-                      <span>{selectedTask.size}</span>
-                      <span>•</span>
-                      <span>{selectedTask.time}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(selectedTask.status)}
-                  <span className="text-sm font-medium">{getStatusText(selectedTask.status)}</span>
-                </div>
-              </div>
-
-              {/* 任务操作按钮 */}
-              <div className="flex flex-wrap gap-3 mb-6">
-
-                <Button variant="outline">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  分享
-                </Button>
-                <Button variant="outline">
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  重新翻译
-                </Button>
-                <Button variant="outline">
-                  <Eye className="w-4 h-4 mr-2" />
-                  预览
-                </Button>
-                <Button variant="outline" className="text-red-600 hover:text-red-700 bg-transparent">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  删除
-                </Button>
-              </div>
-
-              {/* 任务元数据 */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <FileText className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-                    <div className="text-sm text-gray-600">页数</div>
-                    <div className="text-lg font-semibold text-gray-900">{selectedTask.pages}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <Languages className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
-                    <div className="text-sm text-gray-600">翻译方向</div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {selectedTask.sourceLanguage} → {selectedTask.targetLanguage}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <Target className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-                    <div className="text-sm text-gray-600">专业领域</div>
-                    <div className="text-lg font-semibold text-gray-900">{selectedTask.category}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <Award className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
-                    <div className="text-sm text-gray-600">文件大小</div>
-                    <div className="text-lg font-semibold text-gray-900">{selectedTask.size}</div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* 预览区域 */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>文档预览</CardTitle>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={previewMode === "side-by-side" ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => setPreviewMode("side-by-side")}
-                      >
-                        <FileDiff className="w-4 h-4 mr-2" />
-                        对照模式
-                      </Button>
-                      <Button
-                        variant={previewMode === "single" ? "secondary" : "ghost"}
-                        size="sm"
-                        onClick={() => setPreviewMode("single")}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        单页模式
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div
-                    className={cn(
-                      "grid gap-4 h-96",
-                      previewMode === "side-by-side" ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1",
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "bg-gray-50 rounded-lg border border-gray-200 p-4",
-                        previewMode === "single" && "hidden lg:block",
-                      )}
-                    >
-                      <h4 className="font-semibold text-gray-900 mb-2">原文</h4>
-                      <div className="w-full h-full bg-white rounded flex items-center justify-center text-gray-400 border border-gray-200">
-                        原文文档预览区
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">译文</h4>
-                      <div className="w-full h-full bg-white rounded flex items-center justify-center text-gray-400 border border-gray-200">
-                        译文文档预览区
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )
-
-      case "new-translation":
-        // 新翻译配置页面
-        if (pageState === "upload") {
-          // 文件上传页面
-          return (
-            <div className="p-6 h-full overflow-y-auto">
-              <div className="max-w-4xl mx-auto">
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-4">上传文档</h1>
-                  <p className="text-lg text-gray-600">请选择需要翻译的文档文件</p>
-                </div>
-
-                {/* 文件上传区域 */}
-                <div className="mb-8">
-                  <div
-                    className="relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition-colors group"
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <UploadCloud className="w-16 h-16 text-blue-400 mb-4 group-hover:text-blue-500 transition-colors" />
-                    <p className="text-xl font-semibold text-blue-700 mb-2">拖拽文件到此处，或点击上传</p>
-                    <p className="text-sm text-blue-500">支持 PDF, DOCX, EPUB, TXT, MOBI, AZW 格式</p>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      className="hidden"
-                      accept={supportedMimeTypes.join(",")}
-                    />
-                  </div>
-                  {error && (
-                    <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded-lg">
-                      <p className="text-red-700 text-center">{error}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        }
-
-        if (pageState === "reading") {
-          // 文档读取页面
-          return (
-            <div className="p-6 h-full overflow-y-auto">
-              <div className="max-w-4xl mx-auto">
-                <div className="text-center">
-                  <div className="mb-8">
-                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <FileIcon className="w-10 h-10 text-blue-600 animate-bounce" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">文档信息读取中</h1>
-                    <p className="text-lg text-gray-600 mb-6">正在分析文档结构和内容，请稍等...</p>
-                    
-                    {/* 加载动画 */}
-                    <div className="flex justify-center mb-6">
-                      <div className="flex space-x-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
-                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                      </div>
-                    </div>
-
-                    {/* 文件信息 */}
-                    {file && (
-                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 inline-block">
-                        <div className="flex items-center gap-3">
-                          <FileIcon className="h-6 w-6 text-blue-500" />
-                          <div>
-                            <p className="font-semibold text-gray-900">{file.name}</p>
-                            <p className="text-sm text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }
-        
-        // 配置页面 (文件已上传)
-        return (
-          <div className="p-6 h-full overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              {/* 文件信息显示 */}
-              {file && (
-                <div className="bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FileIcon className="h-6 w-6 text-blue-500" />
-                      <div>
-                        <p className="font-semibold text-gray-900">{file.name}</p>
-                        <p className="text-sm text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={resetAll}
-                      className="text-gray-500 hover:text-gray-800 hover:bg-gray-200"
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-8">
-                {/* 语言和领域信息 */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                      <Languages className="w-5 h-5" /> 源语言
-                    </label>
-                    <div className="w-full bg-gray-50 border border-gray-300 rounded-md h-12 flex items-center px-3 text-gray-500">
-                      自动检测
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                      <Languages className="w-5 h-5" /> 目标语言
-                    </label>
-                    <input
-                      type="text"
-                      value={targetLanguage}
-                      onChange={(e) => setTargetLanguage(e.target.value)}
-                      placeholder="请输入目标语言（留空默认为英文）"
-                      className="w-full bg-white border border-gray-300 rounded-md h-12 px-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                      <Target className="w-5 h-5" /> 翻译领域
-                    </label>
-                    <div className="w-full bg-gray-50 border border-gray-300 rounded-md h-12 flex items-center px-3 text-gray-500">
-                      待确定
-                    </div>
-                  </div>
-                </div>
-
-                {/* 开始翻译按钮 */}
-                <div className="text-center pt-6">
-                  <Button
-                    size="lg"
-                    onClick={handleStartTranslation}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105"
-                  >
-                    <Wand2 className="mr-2 h-5 w-5" />
-                    开始翻译
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      default:
-        return null
-    }
+  // 未登录状态
+  if (!isAuthenticated || !user) {
+    return null
   }
 
-  // 主布局渲染
   return (
-    <div className="flex h-screen bg-gray-100">
-      {renderLeftPanel()}
-      <div className="flex-1 bg-white">{renderCenterPanel()}</div>
-      {renderRightPanel()}
+    <div className="min-h-screen bg-gray-50">
+      {/* 导航栏 */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Mountain className="h-6 w-6 text-blue-600" />
+            <span className="font-semibold text-gray-900">格式译专家</span>
+          </Link>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg">
+              <User className="h-4 w-4 text-gray-600" />
+              <span className="text-sm text-gray-700">{user.name}</span>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard_MainPage">仪表板</Link>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={handleLogout}
+              title="退出登录"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* 主要内容 */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">我的工作台</h1>
+            <p className="text-gray-600 mt-1">管理您的所有翻译文档</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => refetch()}
+              disabled={docsLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${docsLoading ? 'animate-spin' : ''}`} />
+              刷新
+            </Button>
+            <Button onClick={() => setShowUploadDialog(!showUploadDialog)}>
+              <Upload className="h-4 w-4 mr-2" />
+              上传文档
+            </Button>
+          </div>
+        </div>
+
+        {/* 错误提示 */}
+        {docsError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              加载文档时出错：{docsError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* 上传组件 */}
+        {showUploadDialog && (
+          <div className="mb-6">
+            <DocumentUpload />
+          </div>
+        )}
+
+        {/* 搜索和筛选栏 */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="搜索文档..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="筛选状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部状态</SelectItem>
+                <SelectItem value={DocumentStatus.COMPLETED}>已完成</SelectItem>
+                <SelectItem value={DocumentStatus.TRANSLATING}>翻译中</SelectItem>
+                <SelectItem value={DocumentStatus.PROCESSING}>处理中</SelectItem>
+                <SelectItem value={DocumentStatus.REVIEWING}>审核中</SelectItem>
+                <SelectItem value={DocumentStatus.FAILED}>失败</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="排序方式" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date">按日期</SelectItem>
+                <SelectItem value="name">按名称</SelectItem>
+                <SelectItem value="status">按状态</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* 文档列表 */}
+        {docsLoading && filteredDocuments.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="p-4">
+                <Skeleton className="h-32 w-full" />
+              </Card>
+            ))}
+          </div>
+        ) : filteredDocuments.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-16 text-center">
+            <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {searchQuery || filterStatus !== "all" ? "没有找到匹配的文档" : "还没有文档"}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {searchQuery || filterStatus !== "all" 
+                ? "尝试调整搜索条件或筛选器"
+                : "上传您的第一个文档开始翻译"
+              }
+            </p>
+            {!searchQuery && filterStatus === "all" && (
+              <Button onClick={() => setShowUploadDialog(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                上传文档
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredDocuments.map((document) => (
+              <DocumentCard
+                key={document.id}
+                document={document}
+                isSelected={selectedDocument === document.id}
+                isDeleting={isDeleting === document.id}
+                onSelect={() => setSelectedDocument(document.id)}
+                onPreview={() => handlePreview(document.id)}
+                onDownload={() => handleDownload(document)}
+                onDelete={() => handleDelete(document.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 统计信息 */}
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              共 {filteredDocuments.length} 个文档
+              {searchQuery && ` (搜索: "${searchQuery}")`}
+              {filterStatus !== "all" && ` (筛选: ${getStatusLabel(filterStatus as DocumentStatus)})`}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span>
+                已完成: {filteredDocuments.filter(d => d.status === DocumentStatus.COMPLETED).length}
+              </span>
+              <span>
+                处理中: {filteredDocuments.filter(d => 
+                  d.status === DocumentStatus.TRANSLATING || 
+                  d.status === DocumentStatus.PROCESSING
+                ).length}
+              </span>
+              <span>
+                失败: {filteredDocuments.filter(d => d.status === DocumentStatus.FAILED).length}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
+}
+
+/**
+ * 文档卡片组件
+ */
+function DocumentCard({
+  document,
+  isSelected,
+  isDeleting,
+  onSelect,
+  onPreview,
+  onDownload,
+  onDelete,
+}: {
+  document: any
+  isSelected: boolean
+  isDeleting: boolean
+  onSelect: () => void
+  onPreview: () => void
+  onDownload: () => void
+  onDelete: () => void
+}) {
+  const getStatusIcon = (status: DocumentStatus) => {
+    switch (status) {
+      case DocumentStatus.COMPLETED:
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case DocumentStatus.TRANSLATING:
+      case DocumentStatus.PROCESSING:
+        return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+      case DocumentStatus.REVIEWING:
+        return <Clock className="h-4 w-4 text-yellow-600" />
+      case DocumentStatus.FAILED:
+        return <XCircle className="h-4 w-4 text-red-600" />
+      default:
+        return <Clock className="h-4 w-4 text-gray-600" />
+    }
+  }
+
+  const getStatusColor = (status: DocumentStatus) => {
+    switch (status) {
+      case DocumentStatus.COMPLETED:
+        return "bg-green-100 text-green-800"
+      case DocumentStatus.TRANSLATING:
+      case DocumentStatus.PROCESSING:
+        return "bg-blue-100 text-blue-800"
+      case DocumentStatus.REVIEWING:
+        return "bg-yellow-100 text-yellow-800"
+      case DocumentStatus.FAILED:
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  return (
+    <Card 
+      className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+        isSelected ? 'ring-2 ring-blue-500' : ''
+      }`}
+      onClick={onSelect}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-gray-400" />
+          <Badge className={getStatusColor(document.status)} variant="secondary">
+            <span className="flex items-center gap-1">
+              {getStatusIcon(document.status)}
+              {getStatusLabel(document.status)}
+            </span>
+          </Badge>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation()
+              onPreview()
+            }}>
+              <Eye className="h-4 w-4 mr-2" />
+              预览
+            </DropdownMenuItem>
+            {document.status === DocumentStatus.COMPLETED && (
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation()
+                onDownload()
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                下载
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem disabled>
+              <Share2 className="h-4 w-4 mr-2" />
+              分享
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="text-red-600"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete()
+              }}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              删除
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
+        {document.title}
+      </h3>
+
+      <div className="space-y-1 text-sm text-gray-600">
+        <p>
+          {document.sourceLanguage} → {document.targetLanguage}
+        </p>
+        <p className="text-xs">
+          风格: {getStyleLabel(document.translationStyle)}
+        </p>
+        {document.progress > 0 && document.progress < 100 && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span>进度</span>
+              <span>{document.progress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all"
+                style={{ width: `${document.progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+        <p className="text-xs text-gray-500 pt-2">
+          {new Date(document.createdAt).toLocaleDateString('zh-CN')}
+        </p>
+      </div>
+    </Card>
+  )
+}
+
+/**
+ * 骨架屏组件
+ */
+function WorkspaceSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-32" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <Skeleton className="h-10 w-48 mb-2" />
+            <Skeleton className="h-6 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        <Skeleton className="h-16 w-full mb-6" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-32 w-full" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 获取状态标签
+ */
+function getStatusLabel(status: DocumentStatus): string {
+  switch (status) {
+    case DocumentStatus.COMPLETED:
+      return "已完成"
+    case DocumentStatus.TRANSLATING:
+      return "翻译中"
+    case DocumentStatus.PROCESSING:
+      return "处理中"
+    case DocumentStatus.REVIEWING:
+      return "审核中"
+    case DocumentStatus.FAILED:
+      return "失败"
+    default:
+      return status
+  }
+}
+
+/**
+ * 获取风格标签
+ */
+function getStyleLabel(style: TranslationStyle): string {
+  switch (style) {
+    case TranslationStyle.GENERAL:
+      return "通用"
+    case TranslationStyle.ACADEMIC:
+      return "学术"
+    case TranslationStyle.BUSINESS:
+      return "商务"
+    case TranslationStyle.LEGAL:
+      return "法律"
+    case TranslationStyle.TECHNICAL:
+      return "技术"
+    case TranslationStyle.CREATIVE:
+      return "创意"
+    case TranslationStyle.MEDICAL:
+      return "医疗"
+    case TranslationStyle.FINANCIAL:
+      return "金融"
+    default:
+      return style
+  }
 }

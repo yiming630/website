@@ -6,10 +6,13 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "setup": "node setup-queue-env.js",
     "test": "node -e \"console.log('API test endpoint: http://127.0.0.1:4000/graphql')\"",
     "test:translation": "node test-translation-api.js",
     "test:queue": "node test-postgres-queue.js",
     "test:redis": "node test-redis-queue.js",
+    "test:all": "node test-queue-system.js",
+    "check": "node check-services.js",
     "worker:translation": "node src/workers/translationWorker.js",
     "worker:redis": "node src/workers/redisTranslationWorker.js",
     "worker:dev": "nodemon src/workers/translationWorker.js",
