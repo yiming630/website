@@ -1,8 +1,6 @@
 import "./globals.css"
 import type { Metadata } from 'next'
-import { AuthProvider } from '@/hooks/useAuth'
-import { ApolloProvider } from '@apollo/client'
-import { apolloClient } from '@/lib/apollo-client'
+import { Providers } from '@/components/Providers'
 
 export const metadata: Metadata = {
   title: '格式译专家 - 专业文档翻译平台',
@@ -17,11 +15,9 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <body>
-        <ApolloProvider client={apolloClient}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ApolloProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   )

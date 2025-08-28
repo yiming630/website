@@ -1,3 +1,5 @@
+"use client"
+
 import { useCallback, useEffect, useState } from 'react';
 import { documentService } from '@/services/document.service';
 import {
