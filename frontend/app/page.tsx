@@ -308,6 +308,9 @@ export default function HomePage() {
           <Link className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" href="#faq">
             常见问题
           </Link>
+          <Link className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" href="/contact">
+            联系我们
+          </Link>
         </nav>
         <div className="ml-6 flex gap-2">
           <Button variant="ghost" asChild>
@@ -497,7 +500,7 @@ export default function HomePage() {
           <Link className="text-xs text-gray-600 hover:text-gray-900 transition-colors" href="#">
             隐私政策
           </Link>
-          <Link className="text-xs text-gray-600 hover:text-gray-900 transition-colors" href="#">
+          <Link className="text-xs text-gray-600 hover:text-gray-900 transition-colors" href="/contact">
             联系我们
           </Link>
         </nav>
