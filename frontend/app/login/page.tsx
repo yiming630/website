@@ -19,7 +19,9 @@ import {
   Mail,
   Lock,
   User,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
@@ -31,7 +33,13 @@ import { useAuth } from "@/hooks/useAuth"
  */
 export default function LoginPage() {
   const router = useRouter()
-  const { login, register: registerUser, loading: authLoading, error: authError } = useAuth()
+  const { 
+    login, 
+    register: registerUser, 
+    sendVerificationEmail, 
+    loading: authLoading, 
+    error: authError 
+  } = useAuth()
   
   // 表单状态
   const [isRegister, setIsRegister] = useState(false)
@@ -42,6 +50,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
+  const [verificationEmail, setVerificationEmail] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // 清除错误信息
   useEffect(() => {
@@ -74,7 +86,14 @@ export default function LoginPage() {
       setSuccess("登录成功，正在跳转...")
       // 登录成功后会自动跳转到dashboard，由AuthProvider处理
     } catch (err: any) {
-      setError(err.message || "登录失败，请检查邮箱和密码")
+      // 如果错误消息提示需要邮箱验证，显示验证界面
+      if (err.message && (err.message.includes('验证') || err.message.includes('邮箱'))) {
+        setShowEmailVerification(true)
+        setVerificationEmail(email)
+        setError(err.message)
+      } else {
+        setError(err.message || "登录失败，请检查邮箱和密码")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -114,7 +133,39 @@ export default function LoginPage() {
       setSuccess("注册成功，正在跳转...")
       // 注册成功后会自动登录并跳转到dashboard
     } catch (err: any) {
-      setError(err.message || "注册失败，请稍后再试")
+      // 如果错误消息提示需要邮箱验证，显示验证界面
+      if (err.message && (err.message.includes('验证') || err.message.includes('邮箱'))) {
+        setShowEmailVerification(true)
+        setVerificationEmail(email)
+        setError(err.message)
+      } else {
+        setError(err.message || "注册失败，请稍后再试")
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  /**
+   * 重新发送验证邮件
+   */
+  const handleResendVerification = async () => {
+    if (!verificationEmail) return
+
+    setError(null)
+    setSuccess(null)
+    setIsLoading(true)
+
+    try {
+      const result = await sendVerificationEmail(verificationEmail)
+      
+      if (result.success) {
+        setSuccess(`验证邮件已重新发送到 ${verificationEmail}，请检查您的邮箱`)
+      } else {
+        setError('发送验证邮件失败：' + result.message)
+      }
+    } catch (err: any) {
+      setError('发送验证邮件失败：' + (err.message || '未知错误'))
     } finally {
       setIsLoading(false)
     }
@@ -153,12 +204,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* 品牌标识 */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-gray-900">
-            <Mountain className="h-8 w-8 text-emerald-600" />
+            <Mountain className="h-8 w-8 text-gray-900" />
             格式译专家
           </Link>
           <p className="text-gray-600 mt-2">专业文档翻译平台</p>
@@ -184,9 +235,9 @@ export default function LoginPage() {
             )}
             
             {success && (
-              <Alert className="mb-4 border-green-600 bg-green-50">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">{success}</AlertDescription>
+              <Alert className="mb-4 border-gray-600 bg-gray-50">
+                <CheckCircle className="h-4 w-4 text-gray-600" />
+                <AlertDescription className="text-gray-800">{success}</AlertDescription>
               </Alert>
             )}
 
@@ -218,14 +269,22 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="请输入密码"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       required
                       disabled={isLoading || authLoading}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      disabled={isLoading || authLoading}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -241,7 +300,7 @@ export default function LoginPage() {
                       记住我
                     </Label>
                   </div>
-                  <Link href="#" className="text-sm text-green-600 hover:underline">
+                  <Link href="#" className="text-sm text-gray-600 hover:underline">
                     忘记密码？
                   </Link>
                 </div>
@@ -249,7 +308,7 @@ export default function LoginPage() {
                 {/* 登录按钮 */}
                 <Button 
                   type="submit" 
-                  className="w-full bg-green-600 hover:bg-green-700" 
+                  className="w-full bg-gray-900 hover:bg-gray-800" 
                   disabled={isLoading || authLoading}
                 >
                   {isLoading || authLoading ? "登录中..." : "登录"}
@@ -301,14 +360,22 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="register-password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="请输入密码（至少6位）"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       required
                       disabled={isLoading || authLoading}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      disabled={isLoading || authLoading}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -319,26 +386,76 @@ export default function LoginPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="confirm-password"
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="请再次输入密码"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       required
                       disabled={isLoading || authLoading}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      disabled={isLoading || authLoading}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
 
                 {/* 注册按钮 */}
                 <Button 
                   type="submit" 
-                  className="w-full bg-green-600 hover:bg-green-700" 
+                  className="w-full bg-gray-900 hover:bg-gray-800" 
                   disabled={isLoading || authLoading}
                 >
                   {isLoading || authLoading ? "注册中..." : "注册"}
                 </Button>
               </form>
+            )}
+
+            {/* 邮箱验证界面 */}
+            {showEmailVerification && (
+              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Mail className="h-5 w-5 text-amber-600" />
+                  <h3 className="font-semibold text-amber-800">邮箱验证required</h3>
+                </div>
+                <p className="text-sm text-amber-700 mb-4">
+                  我们已向 <strong>{verificationEmail}</strong> 发送了验证邮件。
+                  请点击邮件中的链接完成验证后重新登录。
+                </p>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleResendVerification}
+                    disabled={isLoading}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+                    重新发送
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setShowEmailVerification(false)
+                      setError(null)
+                      setSuccess(null)
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-300"
+                  >
+                    关闭
+                  </Button>
+                </div>
+                <div className="mt-3 text-xs text-amber-600">
+                  <p>• 请检查垃圾邮件文件夹</p>
+                  <p>• 验证邮件可能需要几分钟才能送达</p>
+                </div>
+              </div>
             )}
 
             <Separator className="my-6" />
@@ -354,7 +471,7 @@ export default function LoginPage() {
                     setError(null)
                     setSuccess(null)
                   }}
-                  className="text-green-600 hover:underline ml-1"
+                  className="text-gray-600 hover:underline ml-1"
                   disabled={isLoading || authLoading}
                 >
                   {isRegister ? "立即登录" : "立即注册"}
@@ -401,11 +518,11 @@ export default function LoginPage() {
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
                 登录即表示您同意我们的{" "}
-                <Link href="#" className="text-green-600 hover:underline">
+                <Link href="#" className="text-gray-600 hover:underline">
                   用户协议
                 </Link>{" "}
                 和{" "}
-                <Link href="#" className="text-green-600 hover:underline">
+                <Link href="#" className="text-gray-600 hover:underline">
                   隐私政策
                 </Link>
               </p>

@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-08-30T02:25:55.829Z",
+  "apiUrl": "http://localhost:4000",
+  "tests": [
+    {
+      "name": "Health Check Endpoint",
+      "status": "passed",
+      "duration": 137,
+      "error": null,
+      "details": {
+        "status": "degraded",
+        "service": "api-gateway",
+        "database": "disconnected",
+        "timestamp": "2025-08-30T02:25:55.958Z",
+        "uptime": 70.0842878
+      }
+    },
+    {
+      "name": "GraphQL Schema Introspection",
+      "status": "passed",
+      "duration": 58,
+      "error": null,
+      "details": {
+        "typeCount": 43
+      }
+    },
+    {
+      "name": "Supported Languages Query",
+      "status": "failed",
+      "duration": 72,
+      "error": "Failed to fetch supported languages",
+      "details": {}
+    },
+    {
+      "name": "User Registration",
+      "status": "passed",
+      "duration": 20,
+      "error": null,
+      "details": {
+        "skipped": true
+      }
+    },
+    {
+      "name": "User Login",
+      "status": "failed",
+      "duration": 10,
+      "error": "Login failed",
+      "details": {}
+    },
+    {
+      "name": "Invalid Query Error Handling",
+      "status": "failed",
+      "duration": 4,
+      "error": "HTTP 400: Bad Request",
+      "details": {}
+    },
+    {
+      "name": "Invalid Mutation Input",
+      "status": "failed",
+      "duration": 7,
+      "error": "HTTP 400: Bad Request",
+      "details": {}
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 4,
+    "total": 7
+  }
+}

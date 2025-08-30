@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-08-30T02:25:45.701Z",
+  "tests": [
+    {
+      "name": "Database Connection",
+      "status": "passed",
+      "duration": 68,
+      "error": null
+    },
+    {
+      "name": "Database Version Check",
+      "status": "passed",
+      "duration": 2,
+      "error": null
+    },
+    {
+      "name": "Tables Existence Check",
+      "status": "passed",
+      "duration": 8,
+      "error": null
+    },
+    {
+      "name": "User Table Query",
+      "status": "failed",
+      "duration": 1,
+      "error": "Users table does not exist"
+    },
+    {
+      "name": "Connection Pool Test",
+      "status": "passed",
+      "duration": 100,
+      "error": null
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5
+  }
+}

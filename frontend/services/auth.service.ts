@@ -21,13 +21,20 @@ const REGISTER_MUTATION = gql`
         id
         name
         email
+        emailVerified
+        emailVerifiedAt
+        accountStatus
         role
         plan
         preferences
         createdAt
+        lastLogin
       }
-      token
-      refreshToken
+      tokens {
+        accessToken
+        refreshToken
+      }
+      message
     }
   }
 `;
@@ -39,14 +46,82 @@ const LOGIN_MUTATION = gql`
         id
         name
         email
+        emailVerified
+        emailVerifiedAt
+        accountStatus
         role
         plan
         preferences
         createdAt
         lastLogin
       }
-      token
-      refreshToken
+      tokens {
+        accessToken
+        refreshToken
+      }
+      message
+    }
+  }
+`;
+
+const SEND_VERIFICATION_EMAIL_MUTATION = gql`
+  mutation SendVerificationEmail($email: String!) {
+    sendVerificationEmail(email: $email) {
+      success
+      message
+      emailSent
+    }
+  }
+`;
+
+const RESEND_VERIFICATION_EMAIL_MUTATION = gql`
+  mutation ResendVerificationEmail {
+    resendVerificationEmail {
+      success
+      message
+      emailSent
+    }
+  }
+`;
+
+const VERIFY_EMAIL_MUTATION = gql`
+  mutation VerifyEmail($token: String!) {
+    verifyEmail(token: $token) {
+      success
+      message
+      user {
+        id
+        name
+        email
+        emailVerified
+        emailVerifiedAt
+        accountStatus
+        role
+        plan
+        preferences
+        createdAt
+        lastLogin
+      }
+      tokens {
+        accessToken
+        refreshToken
+      }
+    }
+  }
+`;
+
+const CHECK_EMAIL_VERIFICATION_STATUS_QUERY = gql`
+  query CheckEmailVerificationStatus($token: String!) {
+    checkEmailVerificationStatus(token: $token) {
+      valid
+      expired
+      used
+      user {
+        id
+        name
+        email
+        emailVerified
+      }
     }
   }
 `;
@@ -136,19 +211,25 @@ export class AuthService {
   /**
    * 用户注册
    * @param input 注册信息
-   * @returns 认证信息包含用户信息和token
+   * @returns 认证信息包含用户信息、token和消息
    */
-  async register(input: RegisterInput): Promise<AuthPayload> {
+  async register(input: RegisterInput): Promise<AuthPayload & { message: string }> {
     try {
       const { data } = await apolloClient.mutate({
         mutation: REGISTER_MUTATION,
         variables: { input },
       });
       
-      // 保存token到本地存储
-      this.saveTokens(data.register.token, data.register.refreshToken);
+      // 只有在有tokens时才保存（邮箱验证后才会有tokens）
+      if (data.register.tokens) {
+        this.saveTokens(data.register.tokens.accessToken, data.register.tokens.refreshToken);
+      }
       
-      return data.register;
+      return {
+        user: data.register.user,
+        tokens: data.register.tokens,
+        message: data.register.message
+      };
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -158,9 +239,9 @@ export class AuthService {
   /**
    * 用户登录
    * @param input 登录信息
-   * @returns 认证信息包含用户信息和token
+   * @returns 认证信息包含用户信息、token和消息
    */
-  async login(input: LoginInput): Promise<AuthPayload> {
+  async login(input: LoginInput): Promise<AuthPayload & { message: string }> {
     try {
       const { data } = await apolloClient.mutate({
         mutation: LOGIN_MUTATION,
@@ -168,9 +249,15 @@ export class AuthService {
       });
       
       // 保存token到本地存储
-      this.saveTokens(data.login.token, data.login.refreshToken);
+      if (data.login.tokens) {
+        this.saveTokens(data.login.tokens.accessToken, data.login.tokens.refreshToken);
+      }
       
-      return data.login;
+      return {
+        user: data.login.user,
+        tokens: data.login.tokens,
+        message: data.login.message
+      };
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -287,6 +374,96 @@ export class AuthService {
       return data.updatePreferences;
     } catch (error) {
       console.error('Update preferences error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 发送邮箱验证邮件
+   * @param email 邮箱地址
+   * @returns 发送结果
+   */
+  async sendVerificationEmail(email: string): Promise<{ success: boolean; message: string; emailSent: boolean }> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: SEND_VERIFICATION_EMAIL_MUTATION,
+        variables: { email },
+      });
+      
+      return data.sendVerificationEmail;
+    } catch (error) {
+      console.error('Send verification email error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 重新发送邮箱验证邮件（需要登录状态）
+   * @returns 发送结果
+   */
+  async resendVerificationEmail(): Promise<{ success: boolean; message: string; emailSent: boolean }> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: RESEND_VERIFICATION_EMAIL_MUTATION,
+      });
+      
+      return data.resendVerificationEmail;
+    } catch (error) {
+      console.error('Resend verification email error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 验证邮箱
+   * @param token 验证令牌
+   * @returns 验证结果包含用户信息和tokens
+   */
+  async verifyEmail(token: string): Promise<{
+    success: boolean;
+    message: string;
+    user: User | null;
+    tokens: AuthTokens | null;
+  }> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: VERIFY_EMAIL_MUTATION,
+        variables: { token },
+      });
+      
+      // 如果验证成功且有tokens，保存到本地存储
+      if (data.verifyEmail.success && data.verifyEmail.tokens) {
+        this.saveTokens(data.verifyEmail.tokens.accessToken, data.verifyEmail.tokens.refreshToken);
+      }
+      
+      return data.verifyEmail;
+    } catch (error) {
+      console.error('Verify email error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 检查邮箱验证令牌状态
+   * @param token 验证令牌
+   * @returns 令牌状态
+   */
+  async checkEmailVerificationStatus(token: string): Promise<{
+    valid: boolean;
+    expired: boolean;
+    used: boolean;
+    user: User | null;
+  }> {
+    try {
+      const { data } = await apolloClient.query({
+        query: CHECK_EMAIL_VERIFICATION_STATUS_QUERY,
+        variables: { token },
+        fetchPolicy: 'network-only',
+      });
+      
+      return data.checkEmailVerificationStatus;
+    } catch (error) {
+      console.error('Check email verification status error:', error);
       throw error;
     }
   }
