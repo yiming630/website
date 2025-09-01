@@ -11,10 +11,8 @@
     "lint": "cd frontend && npm run lint",
     "backend:start": "cd backend && npm start",
     "backend:dev": "cd backend && npm run dev",
-    "api:test": "node ./backend/graphql/test-api.js",
     "db:reset": "node database/reset.js",
     "db:init": "node database/init.js",
-    "db:test": "node -e \"require('./database/connection').testConnection()\"",
     "db:setup": "npm run db:reset && npm run db:init"
   },
   "dependencies": {
