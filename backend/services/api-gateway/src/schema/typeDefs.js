@@ -1,6 +1,4 @@
-const { gql } = require('apollo-server-express');
-
-const typeDefs = gql`
+const typeDefs = `
   # Scalar types
   scalar JSON
   scalar DateTime
@@ -35,6 +33,20 @@ const typeDefs = gql`
   enum ChatMessageAuthor {
     USER
     AI
+  }
+
+  enum ContactInquiryStatus {
+    NEW
+    IN_PROGRESS
+    RESOLVED
+    CLOSED
+  }
+
+  enum ContactPriority {
+    LOW
+    NORMAL
+    HIGH
+    URGENT
   }
 
   # User Types
@@ -270,6 +282,62 @@ const typeDefs = gql`
     section: String
   }
 
+  # Contact Management Types
+  type ContactInquiry {
+    id: ID!
+    userId: ID
+    user: User
+    name: String!
+    email: String!
+    subject: String!
+    inquiryType: String!
+    message: String!
+    status: ContactInquiryStatus!
+    priority: ContactPriority!
+    assignedToId: ID
+    assignedTo: User
+    adminNotes: String
+    ipAddress: String
+    userAgent: String
+    source: String!
+    responses: [ContactResponse!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    resolvedAt: DateTime
+    lastResponseAt: DateTime
+  }
+
+  type ContactResponse {
+    id: ID!
+    inquiryId: ID!
+    inquiry: ContactInquiry!
+    adminId: ID!
+    admin: User!
+    responseText: String!
+    isPublic: Boolean!
+    responseType: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  type ContactCategory {
+    id: ID!
+    name: String!
+    description: String
+    color: String!
+    isActive: Boolean!
+    sortOrder: Int!
+    createdAt: DateTime!
+  }
+
+  type ContactStats {
+    totalInquiries: Int!
+    newInquiries: Int!
+    resolvedInquiries: Int!
+    avgResolutionTime: String
+    mostCommonType: String
+  }
+
   # Document content update input
   input UpdateDocumentContentInput {
     documentId: ID!
@@ -348,6 +416,31 @@ const typeDefs = gql`
     position: JSON
   }
 
+  # Contact Input Types
+  input CreateContactInquiryInput {
+    name: String!
+    email: String!
+    subject: String!
+    inquiryType: String!
+    message: String!
+    userAgent: String
+    ipAddress: String
+  }
+
+  input UpdateContactInquiryInput {
+    status: ContactInquiryStatus
+    priority: ContactPriority
+    assignedToId: ID
+    adminNotes: String
+  }
+
+  input CreateContactResponseInput {
+    inquiryId: ID!
+    responseText: String!
+    isPublic: Boolean = true
+    responseType: String = "reply"
+  }
+
   # Queries
   type Query {
     # User queries
@@ -374,6 +467,12 @@ const typeDefs = gql`
 
     # Email verification queries
     checkEmailVerificationStatus(token: String!): EmailVerificationStatus!
+
+    # Contact queries
+    contactInquiries(status: ContactInquiryStatus, limit: Int, offset: Int): [ContactInquiry!]!
+    contactInquiry(id: ID!): ContactInquiry
+    contactCategories: [ContactCategory!]!
+    contactStats(startDate: String, endDate: String): ContactStats!
   }
 
   type UsersResponse {
@@ -436,6 +535,12 @@ const typeDefs = gql`
     # Chat mutations
     sendChatMessage(input: SendChatMessageInput!): ChatMessage!
     clearChatHistory(documentId: ID!): Boolean!
+
+    # Contact mutations
+    createContactInquiry(input: CreateContactInquiryInput!): ContactInquiry!
+    updateContactInquiry(id: ID!, input: UpdateContactInquiryInput!): ContactInquiry!
+    createContactResponse(input: CreateContactResponseInput!): ContactResponse!
+    deleteContactInquiry(id: ID!): Boolean!
   }
 
   # Subscriptions

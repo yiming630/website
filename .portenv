@@ -1,0 +1,64 @@
+# =====================================================
+# Centralized Port Configuration File
+# =====================================================
+# This file contains all port configurations for the Translation Platform
+# Load this file before .env to ensure consistent port management
+# =====================================================
+
+# Frontend Services
+FRONTEND_PORT=3000
+FRONTEND_DEV_PORT=3000
+
+# Backend Services
+API_GATEWAY_PORT=4002
+USER_SERVICE_PORT=4003
+DOCUMENT_SERVICE_PORT=8001
+COLLABORATION_SERVICE_PORT=4004
+FILE_PROCESSING_SERVICE_PORT=4005
+TRANSLATION_SERVICE_PORT=8000
+
+# Database Services
+POSTGRES_PORT=5432
+DB_PORT=5432
+PG_PORT=5432
+REDIS_PORT=6379
+
+# Development Tools
+PGADMIN_PORT=5050
+REDIS_COMMANDER_PORT=8081
+
+# Email Services
+MAILHOG_SMTP_PORT=1025
+MAILHOG_WEB_PORT=8025
+SMTP_PORT=1025
+
+# Monitoring & Health
+HEALTH_CHECK_PORT=8080
+METRICS_PORT=9090
+
+# WebSocket Ports (same as main service ports)
+WS_API_GATEWAY_PORT=4002
+WS_COLLABORATION_PORT=4004
+
+# Microservices Internal Ports
+QUEUE_SERVICE_PORT=4006
+NOTIFICATION_SERVICE_PORT=4007
+AUTH_SERVICE_PORT=4008
+
+# Docker Container Exposed Ports
+DOCKER_API_GATEWAY_PORT=4002
+DOCKER_FRONTEND_PORT=3000
+DOCKER_POSTGRES_PORT=5432
+DOCKER_REDIS_PORT=6379
+
+# =====================================================
+# Port Ranges Reserved
+# =====================================================
+# 3000-3999: Frontend applications
+# 4000-4999: Backend API services
+# 5000-5999: Database services
+# 6000-6999: Cache services
+# 7000-7999: Message queue services
+# 8000-8999: Processing services
+# 9000-9999: Monitoring services
+# =====================================================

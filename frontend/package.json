@@ -60,6 +60,7 @@
     "embla-carousel-react": "8.5.1",
     "file-saver": "^2.0.5",
     "graphql": "^16.11.0",
+    "graphql-ws": "^6.0.6",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
     "mammoth": "^1.10.0",

@@ -2,11 +2,13 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Mountain, FileText, ArrowRight, ChevronDown, FileIcon, Sparkles, Brain, Database } from "lucide-react"
+import { Mountain, FileText, ArrowRight, ChevronDown, FileIcon, Sparkles, Brain, Database, User, LogOut, Mail, Clock, Globe, Send, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { useState, useRef } from "react"
 import { useFile as useFileContext } from "@/context/file-context"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
+import { useMutation, gql } from "@apollo/client"
 
 /**
  * PDF 上传系统组件
@@ -165,6 +167,228 @@ function PDFUploadSystem() {
   return null
 }
 
+// GraphQL Mutation for creating contact inquiry
+const CREATE_CONTACT_INQUIRY = gql`
+  mutation CreateContactInquiry($input: CreateContactInquiryInput!) {
+    createContactInquiry(input: $input) {
+      id
+      name
+      email
+      subject
+      inquiryType
+      message
+      status
+      createdAt
+    }
+  }
+`;
+
+/**
+ * 联系表单组件
+ */
+function ContactForm() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: ""
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+
+  const [createContactInquiry] = useMutation(CREATE_CONTACT_INQUIRY, {
+    onCompleted: (data) => {
+      console.log('Contact inquiry created:', data.createContactInquiry);
+      setSubmitStatus('success');
+      setIsSubmitting(false);
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSubmitStatus('idle'), 5000);
+    },
+    onError: (error) => {
+      console.error('Contact inquiry error:', error);
+      setSubmitStatus('error');
+      setIsSubmitting(false);
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => setSubmitStatus('idle'), 5000);
+    }
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+    
+    try {
+      await createContactInquiry({
+        variables: {
+          input: {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject || "来自格式译专家的咨询",
+            inquiryType: formData.subject || "其他问题",
+            message: formData.message,
+            userAgent: navigator.userAgent,
+            ipAddress: null // Will be set by backend if needed
+          }
+        }
+      });
+    } catch (error) {
+      // Error is handled by onError callback
+      console.error('Contact form submission error:', error);
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <Card className="p-8">
+        <CardContent className="p-0">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">发送消息给我们</h2>
+          
+          {/* Success Message */}
+          {submitStatus === 'success' && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-green-600 text-sm">✓</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-green-900">消息发送成功！</h3>
+                  <p className="text-green-700 text-sm">我们已收到您的咨询，将在24小时内回复您。</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Error Message */}
+          {submitStatus === 'error' && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-red-600 text-sm">✗</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-900">发送失败</h3>
+                  <p className="text-red-700 text-sm">消息发送失败，请稍后重试或直接发送邮件至 seekhub@gmail.com</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  您的姓名
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="请输入您的姓名"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  电子邮箱
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="your@email.com"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                咨询类型
+              </label>
+              <select
+                id="subject"
+                name="subject"
+                value={formData.subject}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">请选择咨询类型</option>
+                <option value="产品咨询">产品咨询</option>
+                <option value="技术支持">技术支持</option>
+                <option value="使用帮助">使用帮助</option>
+                <option value="账户问题">账户问题</option>
+                <option value="翻译质量反馈">翻译质量反馈</option>
+                <option value="功能建议">功能建议</option>
+                <option value="商务合作">商务合作</option>
+                <option value="价格咨询">价格咨询</option>
+                <option value="Bug反馈">Bug反馈</option>
+                <option value="其他问题">其他问题</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                详细信息
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                required
+                rows={6}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="请详细描述您的需求或问题..."
+              />
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700" 
+              size="lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  发送中...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  发送消息
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 /**
  * 主页组件
  * 包含完整的产品介绍、功能展示和定价信息
@@ -172,6 +396,9 @@ function PDFUploadSystem() {
 export default function HomePage() {
   // FAQ展开状态管理
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
+  
+  // 获取认证状态
+  const { user, logout, isAuthenticated } = useAuth()
 
   // 支持的文件类型配置
   const fileTypes = [
@@ -298,27 +525,37 @@ export default function HomePage() {
           <Mountain className="h-6 w-6 text-blue-600" />
           <span className="font-bold text-xl text-gray-900">格式译专家</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" href="#features">
-            功能特性
-          </Link>
-          <Link className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" href="#scenarios">
-            应用场景
-          </Link>
-          <Link className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" href="#faq">
-            常见问题
-          </Link>
-          <Link className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors" href="/contact">
-            联系我们
-          </Link>
-        </nav>
         <div className="ml-6 flex gap-2">
-          <Button variant="ghost" asChild>
-            <Link href="/login">登录</Link>
-          </Button>
-          <Button asChild className="bg-blue-600 hover:bg-blue-700">
-            <Link href="/user-type">免费体验</Link>
-          </Button>
+          {isAuthenticated ? (
+            // 已登录状态
+            <>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <User className="h-4 w-4" />
+                <span>欢迎回来, {user?.name}</span>
+              </div>
+              <Button variant="ghost" asChild>
+                <Link href="/dashboard_MainPage">工作台</Link>
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => logout()}
+                className="text-red-600 hover:text-red-700"
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                退出
+              </Button>
+            </>
+          ) : (
+            // 未登录状态
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">登录</Link>
+              </Button>
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Link href="/user-type">免费体验</Link>
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
@@ -337,12 +574,21 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="space-x-4">
-                <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
-                  <Link href="/user-type">
-                    立即开始翻译
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                {isAuthenticated ? (
+                  <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
+                    <Link href="/dashboard_MainPage">
+                      进入工作台
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
+                    <Link href="/user-type">
+                      立即开始翻译
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="outline" size="lg">
                   观看演示
                 </Button>
@@ -467,6 +713,75 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* 联系我们部分 */}
+        <section id="contact" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-gray-900 mb-4">
+                帮助和支持
+              </h2>
+              <p className="mx-auto max-w-[700px] text-gray-600 md:text-xl">
+                遇到问题？需要帮助？我们的专业团队随时为您提供支持
+              </p>
+            </div>
+            
+            {/* 联系方式卡片 */}
+            <div className="grid md:grid-cols-3 gap-8 mb-16">
+              <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+                <CardContent className="p-0">
+                  <Mail className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">电子邮件</h3>
+                  <p className="text-gray-600 mb-2">联系人：格式译工作人员</p>
+                  <a href="mailto:seekhub@gmail.com" className="text-blue-600 hover:text-blue-700 font-medium">
+                    seekhub@gmail.com
+                  </a>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+                <CardContent className="p-0">
+                  <Clock className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">响应时间</h3>
+                  <p className="text-gray-600">工作日：24小时内</p>
+                  <p className="text-gray-600">周末：48小时内</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-center p-6 hover:shadow-lg transition-shadow">
+                <CardContent className="p-0">
+                  <Globe className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">服务时间</h3>
+                  <p className="text-gray-600">全球24/7在线服务</p>
+                  <p className="text-gray-600">专业技术支持</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 联系表单 */}
+            <ContactForm />
+
+            {/* 常见问题提示 */}
+            <div className="max-w-2xl mx-auto mt-12">
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <MessageSquare className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">需要快速帮助？</h3>
+                      <p className="text-gray-600 mb-3">
+                        查看我们的常见问题解答，可能已经有您想要的答案。
+                      </p>
+                      <Button variant="outline" asChild size="sm">
+                        <Link href="#faq">查看常见问题</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* CTA部分 */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-blue-600">
           <div className="container mx-auto px-4 md:px-6">
@@ -479,8 +794,8 @@ export default function HomePage() {
               </div>
               <div className="space-x-4">
                 <Button size="lg" variant="secondary" asChild>
-                  <Link href="/user-type">
-                    免费开始翻译
+                  <Link href={isAuthenticated ? "/dashboard_MainPage" : "/user-type"}>
+                    {isAuthenticated ? "进入工作台" : "免费开始翻译"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -500,7 +815,7 @@ export default function HomePage() {
           <Link className="text-xs text-gray-600 hover:text-gray-900 transition-colors" href="#">
             隐私政策
           </Link>
-          <Link className="text-xs text-gray-600 hover:text-gray-900 transition-colors" href="/contact">
+          <Link className="text-xs text-gray-600 hover:text-gray-900 transition-colors" href="#contact">
             联系我们
           </Link>
         </nav>

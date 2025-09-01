@@ -4,6 +4,7 @@ const documentResolvers = require('./documentResolvers');
 const chatResolvers = require('./chatResolvers');
 const configResolvers = require('./configResolvers');
 const emailVerificationResolvers = require('./emailVerificationResolvers');
+const contactResolvers = require('./contactResolvers');
 
 // Custom scalar resolvers
 const { GraphQLScalarType } = require('graphql');
@@ -59,7 +60,8 @@ const resolvers = {
     ...documentResolvers.Query,
     ...chatResolvers.Query,
     ...configResolvers.Query,
-    ...emailVerificationResolvers.Query
+    ...emailVerificationResolvers.Query,
+    ...contactResolvers.Query
   },
 
   Mutation: {
@@ -67,7 +69,8 @@ const resolvers = {
     ...projectResolvers.Mutation,
     ...documentResolvers.Mutation,
     ...chatResolvers.Mutation,
-    ...emailVerificationResolvers.Mutation
+    ...emailVerificationResolvers.Mutation,
+    ...contactResolvers.Mutation
   },
 
   Subscription: {
@@ -79,7 +82,9 @@ const resolvers = {
   User: userResolvers.User,
   Project: projectResolvers.Project,
   Document: documentResolvers.Document,
-  ChatMessage: chatResolvers.ChatMessage
+  ChatMessage: chatResolvers.ChatMessage,
+  ContactInquiry: contactResolvers.ContactInquiry,
+  ContactResponse: contactResolvers.ContactResponse
 };
 
 module.exports = resolvers;

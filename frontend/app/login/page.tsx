@@ -130,8 +130,16 @@ export default function LoginPage() {
         email, 
         password 
       })
-      setSuccess("注册成功，正在跳转...")
-      // 注册成功后会自动登录并跳转到dashboard
+      setSuccess("注册成功！请使用您的邮箱和密码登录")
+      // 注册成功后切换到登录表单
+      setTimeout(() => {
+        setIsRegister(false)
+        setSuccess(null)
+        // 清空注册表单数据，保留邮箱用于登录
+        setName("")
+        setConfirmPassword("")
+        setPassword("")
+      }, 2000)
     } catch (err: any) {
       // 如果错误消息提示需要邮箱验证，显示验证界面
       if (err.message && (err.message.includes('验证') || err.message.includes('邮箱'))) {

@@ -1,0 +1,253 @@
+{
+  "name": "格式译专家 - URL Dependencies",
+  "version": "1.0.0",
+  "description": "Translation Platform URL structure and dependencies mapping",
+  "lastUpdated": "2025-01-15",
+  
+  "routes": {
+    "public": {
+      "/": {
+        "name": "主页",
+        "component": "app/page.tsx",
+        "description": "产品介绍和营销页面",
+        "auth": false,
+        "dependencies": ["/user-type", "/contact", "/login"],
+        "features": ["用户类型选择", "产品展示", "FAQ"],
+        "optimizations": ["动态登录状态", "响应式设计", "SEO优化"]
+      },
+      "/contact": {
+        "name": "帮助和支持",
+        "component": "app/contact/page.tsx",
+        "description": "联系我们和客户支持中心",
+        "auth": false,
+        "dependencies": ["mailto:seekhub@gmail.com"],
+        "features": ["邮件表单", "多种咨询类型", "响应时间承诺"],
+        "optimizations": ["动态登录状态", "表单验证", "邮件集成"]
+      },
+      "/user-type": {
+        "name": "用户类型选择",
+        "component": "app/user-type/page.tsx",
+        "description": "选择翻译模式：一键翻译或专业模式",
+        "auth": false,
+        "dependencies": ["/reader-workspace", "/workspace"],
+        "features": ["两种模式选择", "功能对比", "用户引导"],
+        "optimizations": ["localStorage存储", "快速导航"]
+      },
+      "/login": {
+        "name": "登录注册",
+        "component": "app/login/page.tsx",
+        "description": "用户登录和注册页面",
+        "auth": false,
+        "dependencies": ["/verify-email", "/dashboard_MainPage"],
+        "features": ["登录", "注册", "邮箱验证", "演示账号"],
+        "optimizations": ["表单验证", "错误处理", "自动跳转"]
+      },
+      "/verify-email": {
+        "name": "邮箱验证",
+        "component": "app/verify-email/page.tsx",
+        "description": "邮箱验证处理页面",
+        "auth": false,
+        "dependencies": ["/dashboard_MainPage", "/login"],
+        "features": ["Token验证", "状态检查", "重新发送邮件"],
+        "optimizations": ["错误处理", "用户反馈", "自动跳转"]
+      }
+    },
+    
+    "authenticated": {
+      "/dashboard_MainPage": {
+        "name": "主仪表板",
+        "component": "app/dashboard_MainPage/page.tsx",
+        "description": "用户主控制台和数据统计",
+        "auth": true,
+        "dependencies": ["/workspace"],
+        "features": ["统计数据", "最近文档", "快速操作"],
+        "optimizations": ["实时数据更新", "GraphQL查询", "加载优化"],
+        "removed_features": ["新建翻译按钮"]
+      },
+      "/workspace": {
+        "name": "工作台",
+        "component": "app/workspace/page.tsx",
+        "description": "文档管理和工作区",
+        "auth": true,
+        "dependencies": ["/reader-workspace"],
+        "features": ["文档列表", "搜索筛选", "文档操作"],
+        "optimizations": ["分页加载", "搜索优化", "状态管理"]
+      },
+      "/reader-workspace": {
+        "name": "读者工作台",
+        "component": "app/reader-workspace/page.tsx",
+        "description": "简化的文档翻译工作区",
+        "auth": false,
+        "dependencies": ["/reader-translating", "/reader-download"],
+        "features": ["文档上传", "简单翻译", "快速下载"],
+        "optimizations": ["文件处理", "进度显示", "用户友好界面"]
+      },
+      "/reader-translating": {
+        "name": "翻译进行中",
+        "component": "app/reader-translating/page.tsx",
+        "description": "翻译处理进度页面",
+        "auth": false,
+        "dependencies": ["/reader-download"],
+        "features": ["进度显示", "实时状态", "取消操作"],
+        "optimizations": ["实时更新", "进度动画", "错误处理"]
+      },
+      "/reader-download": {
+        "name": "下载页面",
+        "component": "app/reader-download/page.tsx",
+        "description": "翻译完成后的下载页面",
+        "auth": false,
+        "dependencies": [],
+        "features": ["文件下载", "预览功能", "格式选择"],
+        "optimizations": ["下载优化", "文件处理", "用户反馈"]
+      }
+    },
+    
+    "deprecated": {
+      "/translate": {
+        "name": "在线翻译页面",
+        "status": "removed",
+        "reason": "不再提供在线翻译功能",
+        "removed_date": "2025-01-15",
+        "redirect_to": "/workspace"
+      },
+      "/translate-editor": {
+        "name": "翻译编辑器",
+        "status": "removed", 
+        "reason": "不再提供在线编辑功能",
+        "removed_date": "2025-01-15",
+        "redirect_to": "/workspace"
+      },
+      "/translating": {
+        "name": "翻译处理页面",
+        "status": "deprecated",
+        "reason": "功能合并到reader-translating",
+        "redirect_to": "/reader-translating"
+      },
+      "/preview": {
+        "name": "预览页面",
+        "status": "deprecated",
+        "reason": "功能合并到workspace",
+        "redirect_to": "/workspace"
+      }
+    }
+  },
+  
+  "api_endpoints": {
+    "graphql": {
+      "url": "http://localhost:4000/graphql",
+      "description": "主GraphQL API端点",
+      "queries": [
+        "checkEmailVerificationStatus",
+        "documents",
+        "projects",
+        "supportedLanguages"
+      ],
+      "mutations": [
+        "register",
+        "login",
+        "verifyEmail",
+        "sendVerificationEmail",
+        "logout"
+      ]
+    },
+    "document_service": {
+      "url": "http://localhost:8001",
+      "description": "文档处理服务(Python FastAPI)",
+      "endpoints": [
+        "/upload",
+        "/process",
+        "/download"
+      ]
+    }
+  },
+  
+  "external_dependencies": {
+    "email": {
+      "service": "mailto",
+      "address": "seekhub@gmail.com",
+      "purpose": "客户支持和帮助"
+    },
+    "storage": {
+      "localStorage": [
+        "token",
+        "refreshToken", 
+        "userType"
+      ],
+      "sessionStorage": []
+    }
+  },
+  
+  "performance_optimizations": {
+    "code_splitting": {
+      "enabled": true,
+      "strategy": "route-based",
+      "description": "每个页面组件独立打包"
+    },
+    "lazy_loading": {
+      "enabled": true,
+      "components": ["重型组件", "图表组件"],
+      "images": true
+    },
+    "caching": {
+      "apollo_cache": true,
+      "service_worker": false,
+      "static_assets": true
+    },
+    "bundle_optimization": {
+      "tree_shaking": true,
+      "minification": true,
+      "compression": true
+    }
+  },
+  
+  "seo_optimization": {
+    "meta_tags": {
+      "title": "格式译专家 - 专业文档翻译平台",
+      "description": "基于AI的文档翻译服务，支持多种格式，保持完美排版",
+      "keywords": ["文档翻译", "AI翻译", "PDF翻译", "格式保持"]
+    },
+    "structured_data": true,
+    "sitemap": "/sitemap.xml",
+    "robots": "/robots.txt"
+  },
+  
+  "security": {
+    "authentication": {
+      "method": "JWT",
+      "storage": "localStorage",
+      "refresh_token": true
+    },
+    "cors": {
+      "origin": "http://localhost:3000",
+      "credentials": true
+    },
+    "content_security": {
+      "helmet": true,
+      "rate_limiting": true
+    }
+  },
+  
+  "monitoring": {
+    "error_tracking": false,
+    "performance_monitoring": false,
+    "user_analytics": false,
+    "health_checks": {
+      "frontend": "/health",
+      "backend": "http://localhost:4000/health"
+    }
+  },
+  
+  "development": {
+    "hot_reload": true,
+    "dev_server": "http://localhost:3000",
+    "api_proxy": "http://localhost:4000",
+    "environment": "development"
+  },
+  
+  "production": {
+    "build_output": ".next",
+    "static_export": false,
+    "cdn": false,
+    "compression": true
+  }
+}

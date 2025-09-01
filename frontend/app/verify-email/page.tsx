@@ -299,7 +299,7 @@ export default function VerifyEmailPage() {
               重新注册
             </Link>{" "}
             或{" "}
-            <Link href="/contact" className="text-gray-600 hover:underline">
+            <Link href="/#contact" className="text-gray-600 hover:underline">
               联系客服
             </Link>
           </p>

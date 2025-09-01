@@ -18,7 +18,7 @@
 const { spawn, fork } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+require('dotenv').config({ path: '../../../.env' });
 
 // Service configuration
 const SERVICES = {

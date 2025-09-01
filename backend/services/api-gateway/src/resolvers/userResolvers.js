@@ -11,7 +11,7 @@ const userResolvers = {
       
       try {
         const result = await query(
-          'SELECT id, name, email, role, plan, preferences, created_at, last_login FROM users WHERE id = $1',
+          'SELECT id, name, email, role, plan, preferences, created_at, last_login, email_verified, email_verified_at, account_status FROM users WHERE id = $1',
           [user.id]
         );
 
@@ -19,7 +19,22 @@ const userResolvers = {
           throw new Error('User not found');
         }
 
-        return result.rows[0];
+        const userData = result.rows[0];
+        
+        // Transform snake_case to camelCase for GraphQL schema
+        return {
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          plan: userData.plan,
+          preferences: userData.preferences,
+          emailVerified: userData.email_verified || false,
+          emailVerifiedAt: userData.email_verified_at,
+          accountStatus: userData.account_status || 'pending',
+          createdAt: userData.created_at,
+          lastLogin: userData.last_login
+        };
       } catch (error) {
         console.error('Error fetching user profile:', error);
         throw new Error('Failed to fetch user profile');
@@ -187,11 +202,26 @@ const userResolvers = {
 
         // Return updated user with new preferences
         const userResult = await query(
-          'SELECT id, name, email, role, plan, preferences, created_at, last_login FROM users WHERE id = $1',
+          'SELECT id, name, email, role, plan, preferences, created_at, last_login, email_verified, email_verified_at, account_status FROM users WHERE id = $1',
           [user.id]
         );
 
-        return userResult.rows[0];
+        const userData = userResult.rows[0];
+        
+        // Transform snake_case to camelCase for GraphQL schema
+        return {
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          plan: userData.plan,
+          preferences: userData.preferences,
+          emailVerified: userData.email_verified || false,
+          emailVerifiedAt: userData.email_verified_at,
+          accountStatus: userData.account_status || 'pending',
+          createdAt: userData.created_at,
+          lastLogin: userData.last_login
+        };
       } catch (error) {
         if (error.response?.data?.error) {
           throw new Error(error.response.data.message || error.response.data.error);

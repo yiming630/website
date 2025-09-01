@@ -10,7 +10,7 @@ const { ApolloServerPluginDrainHttpServer } = require('@apollo/server/plugin/dra
 const http = require('http');
 const cors = require('cors');
 const { json } = require('body-parser');
-require('dotenv').config({ path: '../.env.local' });
+require('dotenv').config({ path: '../../../.env' });
 
 const typeDefs = require('./graphql/schema');
 const resolvers = require('./graphql/resolvers');

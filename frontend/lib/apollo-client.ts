@@ -1,27 +1,26 @@
 import { ApolloClient, InMemoryCache, createHttpLink, split, ApolloLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { WebSocketLink } from '@apollo/client/link/ws';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { onError } from '@apollo/client/link/error';
 
 // HTTP链接配置
 const httpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql',
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:4002/graphql',
 });
 
 // WebSocket链接配置（用于订阅）
-const wsLink = typeof window !== 'undefined' ? new WebSocketLink({
-  uri: process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:4000/graphql',
-  options: {
-    reconnect: true,
-    connectionParams: () => {
-      const token = localStorage.getItem('token');
-      return {
-        authorization: token ? `Bearer ${token}` : '',
-      };
-    },
+const wsLink = typeof window !== 'undefined' ? new GraphQLWsLink(createClient({
+  url: process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:4002/graphql',
+  connectionParams: () => {
+    const token = localStorage.getItem('token');
+    return {
+      authorization: token ? `Bearer ${token}` : '',
+    };
   },
-}) : null;
+  shouldRetry: () => true,
+})) : null;
 
 // 认证链接（添加token到请求头）
 const authLink = setContext((_, { headers }) => {
@@ -124,7 +123,7 @@ export const createApolloClient = () => {
   return new ApolloClient({
     ssrMode: typeof window === 'undefined',
     link: createHttpLink({
-      uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql',
+      uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:4002/graphql',
     }),
     cache: new InMemoryCache(),
   });
