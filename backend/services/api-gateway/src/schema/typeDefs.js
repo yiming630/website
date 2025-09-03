@@ -441,6 +441,244 @@ const typeDefs = `
     responseType: String = "reply"
   }
 
+  # File Storage Types
+  type FileMetadata {
+    id: ID!
+    userId: ID!
+    user: User!
+    projectId: ID
+    project: Project
+    
+    # File identification
+    originalFilename: String!
+    storedFilename: String!
+    fileKey: String!
+    fileHash: String!
+    
+    # File properties
+    fileType: String!
+    fileExtension: String!
+    fileSize: Int!
+    
+    # Status tracking
+    uploadStatus: String!
+    processingStatus: String!
+    
+    # Storage information
+    bucketName: String!
+    storageRegion: String!
+    storageClass: String!
+    isEncrypted: Boolean!
+    visibility: String!
+    
+    # Access URLs
+    fileUrl: String
+    cdnUrl: String
+    presignedUrl: String
+    presignedExpiresAt: DateTime
+    
+    # Translation metadata
+    sourceLanguage: String
+    targetLanguage: String
+    translationStyle: String
+    specialization: String
+    
+    # Processing data
+    extractedText: String
+    metadata: JSON
+    thumbnailUrls: [String!]
+    
+    # Upload tracking
+    uploadSessionId: String
+    uploadProgress: Int!
+    
+    # Timestamps
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    uploadedAt: DateTime
+    processedAt: DateTime
+    deletedAt: DateTime
+    lastAccessedAt: DateTime
+    
+    # Related data
+    glossaryMetadata: GlossaryFile
+    shares: [FileShare!]
+    accessLogs: [FileAccessLog!]
+  }
+
+  type GlossaryFile {
+    id: ID!
+    fileMetadataId: ID!
+    fileMetadata: FileMetadata!
+    userId: ID!
+    user: User!
+    
+    # Glossary properties
+    glossaryName: String!
+    description: String
+    sourceLanguage: String!
+    targetLanguage: String!
+    domain: String
+    
+    # Statistics
+    termCount: Int!
+    lastUpdatedAt: DateTime
+    version: Int!
+    
+    # Usage tracking
+    usageCount: Int!
+    lastUsedAt: DateTime
+    
+    # Status
+    validationStatus: String!
+    validationNotes: String
+    validatedBy: ID
+    validatedAt: DateTime
+    
+    # Sharing
+    isPublic: Boolean!
+    isShared: Boolean!
+    sharedWith: [ID!]
+    
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  type FileShare {
+    id: ID!
+    fileMetadataId: ID!
+    fileMetadata: FileMetadata!
+    sharedBy: ID!
+    sharedByUser: User!
+    sharedWith: ID
+    sharedWithUser: User
+    
+    # Sharing configuration
+    shareType: String!
+    recipientEmail: String
+    shareToken: String
+    
+    # Permissions
+    canView: Boolean!
+    canDownload: Boolean!
+    canEdit: Boolean!
+    canComment: Boolean!
+    canShare: Boolean!
+    
+    # Limits and expiration
+    expiresAt: DateTime
+    maxDownloads: Int
+    downloadCount: Int!
+    maxViews: Int
+    viewCount: Int!
+    
+    # Status
+    isActive: Boolean!
+    revokedAt: DateTime
+    revokedBy: ID
+    
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  type FileAccessLog {
+    id: ID!
+    fileMetadataId: ID!
+    fileMetadata: FileMetadata!
+    userId: ID
+    user: User
+    
+    # Access details
+    accessType: String!
+    accessMethod: String!
+    ipAddress: String
+    userAgent: String
+    
+    # Request details
+    responseStatus: Int
+    bytesTransferred: Int
+    accessDuration: Int
+    
+    # Context
+    shareToken: String
+    referrer: String
+    sessionId: String
+    
+    accessedAt: DateTime!
+  }
+
+  type FileStorageStats {
+    totalFiles: Int!
+    totalSizeBytes: Int!
+    totalSizeMB: Float!
+    filesByType: JSON!
+    recentUploads: Int!
+  }
+
+  type FileUploadResult {
+    success: Boolean!
+    fileMetadata: FileMetadata!
+    uploadResult: JSON
+    isDuplicate: Boolean!
+    message: String
+  }
+
+  # File Input Types
+  input FileUploadInput {
+    projectId: ID
+    sourceLanguage: String
+    targetLanguage: String
+    translationStyle: String
+    specialization: String
+    visibility: String = "private"
+  }
+
+  input CreateGlossaryInput {
+    fileMetadataId: ID!
+    glossaryName: String!
+    description: String
+    sourceLanguage: String!
+    targetLanguage: String!
+    domain: String
+  }
+
+  input ShareFileInput {
+    fileMetadataId: ID!
+    shareType: String! # user, email, public_link
+    recipientEmail: String
+    sharedWith: ID
+    permissions: FileSharePermissions!
+    expiresAt: DateTime
+    maxDownloads: Int
+    maxViews: Int
+  }
+
+  input FileSharePermissions {
+    canView: Boolean = true
+    canDownload: Boolean = false
+    canEdit: Boolean = false
+    canComment: Boolean = false
+    canShare: Boolean = false
+  }
+
+  input FileQueryOptions {
+    projectId: ID
+    fileType: String
+    limit: Int = 50
+    offset: Int = 0
+    orderBy: String = "created_at"
+    orderDirection: String = "DESC"
+  }
+
+  input GlossaryQueryOptions {
+    sourceLanguage: String
+    targetLanguage: String
+    domain: String
+    isPublic: Boolean
+    limit: Int = 50
+    offset: Int = 0
+  }
+
   # Queries
   type Query {
     # User queries
@@ -473,6 +711,22 @@ const typeDefs = `
     contactInquiry(id: ID!): ContactInquiry
     contactCategories: [ContactCategory!]!
     contactStats(startDate: String, endDate: String): ContactStats!
+    
+    # File storage queries
+    fileMetadata(id: ID!): FileMetadata
+    userFiles(options: FileQueryOptions): [FileMetadata!]!
+    fileStorageStats: FileStorageStats!
+    fileDownloadUrl(fileId: ID!, expiresIn: Int = 3600): String!
+    
+    # Glossary queries
+    glossaryFile(id: ID!): GlossaryFile
+    userGlossaries(options: GlossaryQueryOptions): [GlossaryFile!]!
+    publicGlossaries(options: GlossaryQueryOptions): [GlossaryFile!]!
+    
+    # File sharing queries
+    fileShares(fileId: ID!): [FileShare!]!
+    sharedWithMe(limit: Int = 50, offset: Int = 0): [FileShare!]!
+    fileAccessLogs(fileId: ID!, limit: Int = 100): [FileAccessLog!]!
   }
 
   type UsersResponse {
@@ -541,6 +795,26 @@ const typeDefs = `
     updateContactInquiry(id: ID!, input: UpdateContactInquiryInput!): ContactInquiry!
     createContactResponse(input: CreateContactResponseInput!): ContactResponse!
     deleteContactInquiry(id: ID!): Boolean!
+    
+    # File storage mutations
+    uploadFile(file: Upload!, input: FileUploadInput!): FileUploadResult!
+    deleteFile(fileId: ID!): Boolean!
+    updateFileMetadata(fileId: ID!, metadata: JSON!): FileMetadata!
+    
+    # Glossary mutations
+    createGlossary(input: CreateGlossaryInput!): GlossaryFile!
+    updateGlossary(id: ID!, input: CreateGlossaryInput!): GlossaryFile!
+    deleteGlossary(id: ID!): Boolean!
+    validateGlossary(id: ID!, status: String!, notes: String): GlossaryFile!
+    
+    # File sharing mutations
+    shareFile(input: ShareFileInput!): FileShare!
+    updateFileShare(shareId: ID!, permissions: FileSharePermissions!): FileShare!
+    revokeFileShare(shareId: ID!): Boolean!
+    
+    # File access mutations
+    generateDownloadUrl(fileId: ID!, expiresIn: Int = 3600): String!
+    trackFileAccess(fileId: ID!, accessType: String!): Boolean!
   }
 
   # Subscriptions

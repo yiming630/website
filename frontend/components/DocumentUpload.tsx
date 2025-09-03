@@ -5,11 +5,34 @@ import { useDocuments } from '@/hooks/useDocuments';
 import { TranslationStyle } from '@/types/graphql';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Upload, 
+  FileText, 
+  CheckCircle, 
+  XCircle, 
+  Loader2,
+  Download,
+  Share2,
+  Eye,
+  Globe,
+  Lock,
+  Shield,
+  Database,
+  Hash,
+  Clock,
+  User,
+  Folder,
+  HardDrive,
+  FileIcon,
+  AlertCircle
+} from 'lucide-react';
 
 /**
  * 文档上传组件
@@ -23,6 +46,8 @@ export function DocumentUpload() {
   const [specialization, setSpecialization] = useState('general');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadedDocument, setUploadedDocument] = useState<any | null>(null);
+  const [showMetadata, setShowMetadata] = useState(false);
 
   // 支持的文件格式
   const supportedFormats = ['pdf', 'docx', 'txt', 'epub', 'mobi', 'azw'];
@@ -65,6 +90,10 @@ export function DocumentUpload() {
       });
       
       console.log('Document uploaded successfully:', document);
+      
+      // Store uploaded document for metadata display
+      setUploadedDocument(document);
+      setShowMetadata(true);
       
       // 清除选择的文件
       setSelectedFile(null);
@@ -236,6 +265,192 @@ export function DocumentUpload() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Upload Success & File Metadata Display */}
+      {uploadedDocument && showMetadata && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-green-900">上传成功</CardTitle>
+                  <CardDescription className="text-green-700">
+                    文档已成功上传并开始处理
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  下载
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  分享
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Eye className="h-4 w-4 mr-2" />
+                  预览
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowMetadata(false)}
+                >
+                  ×
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* File Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <FileIcon className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">文档信息</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">标题:</span>
+                    <span className="font-medium">{uploadedDocument.title}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">状态:</span>
+                    {getStatusBadge(uploadedDocument.status)}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">进度:</span>
+                    <span className="font-medium">{uploadedDocument.progress}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">文件类型:</span>
+                    <span className="font-medium">{uploadedDocument.fileType}</span>
+                  </div>
+                  {uploadedDocument.fileSize && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">文件大小:</span>
+                      <span className="font-medium">
+                        {(uploadedDocument.fileSize / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Globe className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">翻译设置</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">源语言:</span>
+                    <span className="font-medium">{uploadedDocument.sourceLanguage}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">目标语言:</span>
+                    <span className="font-medium">{uploadedDocument.targetLanguage}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">翻译风格:</span>
+                    <span className="font-medium">{uploadedDocument.translationStyle}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">专业领域:</span>
+                    <span className="font-medium">{uploadedDocument.specialization}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Database className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">系统信息</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">文档ID:</span>
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                      {uploadedDocument.id}
+                    </code>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">创建时间:</span>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-gray-500" />
+                      <span className="text-xs">
+                        {new Date(uploadedDocument.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  {uploadedDocument.owner && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">上传用户:</span>
+                      <div className="flex items-center gap-1">
+                        <User className="h-3 w-3 text-gray-500" />
+                        <span className="text-xs">{uploadedDocument.owner.name}</span>
+                      </div>
+                    </div>
+                  )}
+                  {uploadedDocument.fileUrl && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">存储状态:</span>
+                      <div className="flex items-center gap-1">
+                        <HardDrive className="h-3 w-3 text-green-500" />
+                        <span className="text-xs text-green-600">已存储</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Processing Progress */}
+            {uploadedDocument.progress < 100 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                  <span className="text-sm font-medium">处理中...</span>
+                </div>
+                <Progress value={uploadedDocument.progress} className="h-2" />
+                <p className="text-xs text-gray-600">
+                  文档正在后台处理，您可以继续上传其他文档
+                </p>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex gap-2">
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  云端存储
+                </Badge>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Database className="h-3 w-3" />
+                  元数据保存
+                </Badge>
+              </div>
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={() => {
+                  // Navigate to document view or processing page
+                  console.log('View document:', uploadedDocument.id);
+                }}
+              >
+                查看处理状态
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* 文档列表 */}
       <Card>

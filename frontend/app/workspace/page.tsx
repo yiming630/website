@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -28,6 +28,8 @@ import {
   LogOut,
   User,
   Loader2,
+  HardDrive,
+  Shield,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -226,6 +228,69 @@ export default function WorkspacePage() {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* 存储统计卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">总文档数</p>
+                  <p className="text-2xl font-bold">{documents.length}</p>
+                </div>
+                <FileText className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">已完成</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {documents.filter(d => d.status === DocumentStatus.COMPLETED).length}
+                  </p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">处理中</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {documents.filter(d => 
+                      d.status === DocumentStatus.PROCESSING || 
+                      d.status === DocumentStatus.TRANSLATING
+                    ).length}
+                  </p>
+                </div>
+                <Loader2 className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">云端存储</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {documents.filter(d => d.fileUrl).length}
+                  </p>
+                </div>
+                <div className="flex items-center">
+                  <HardDrive className="h-6 w-6 text-purple-500 mr-1" />
+                  <Shield className="h-4 w-4 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* 上传组件 */}
         {showUploadDialog && (

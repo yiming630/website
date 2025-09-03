@@ -5,6 +5,7 @@ const chatResolvers = require('./chatResolvers');
 const configResolvers = require('./configResolvers');
 const emailVerificationResolvers = require('./emailVerificationResolvers');
 const contactResolvers = require('./contactResolvers');
+const fileResolvers = require('./fileResolvers');
 
 // Custom scalar resolvers
 const { GraphQLScalarType } = require('graphql');
@@ -61,7 +62,8 @@ const resolvers = {
     ...chatResolvers.Query,
     ...configResolvers.Query,
     ...emailVerificationResolvers.Query,
-    ...contactResolvers.Query
+    ...contactResolvers.Query,
+    ...fileResolvers.Query
   },
 
   Mutation: {
@@ -70,7 +72,8 @@ const resolvers = {
     ...documentResolvers.Mutation,
     ...chatResolvers.Mutation,
     ...emailVerificationResolvers.Mutation,
-    ...contactResolvers.Mutation
+    ...contactResolvers.Mutation,
+    ...fileResolvers.Mutation
   },
 
   Subscription: {
@@ -79,12 +82,17 @@ const resolvers = {
   },
 
   // Type resolvers
+  Upload: fileResolvers.Upload,
   User: userResolvers.User,
   Project: projectResolvers.Project,
   Document: documentResolvers.Document,
   ChatMessage: chatResolvers.ChatMessage,
   ContactInquiry: contactResolvers.ContactInquiry,
-  ContactResponse: contactResolvers.ContactResponse
+  ContactResponse: contactResolvers.ContactResponse,
+  FileMetadata: fileResolvers.FileMetadata,
+  GlossaryFile: fileResolvers.GlossaryFile,
+  FileShare: fileResolvers.FileShare,
+  FileAccessLog: fileResolvers.FileAccessLog
 };
 
 module.exports = resolvers;

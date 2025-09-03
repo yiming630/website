@@ -17,6 +17,8 @@ import {
   CheckCircle,
   Maximize2,
   X,
+  Shield,
+  Clock,
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
@@ -72,6 +74,28 @@ export default function PreviewPage() {
                       <div>
                         <p className="font-semibold text-gray-900">文档名称.pdf</p>
                         <p className="text-sm text-gray-500">翻译完成 • 2.5 MB</p>
+                      </div>
+                    </div>
+                    
+                    {/* Extended file metadata for reader mode */}
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3 text-green-500" />
+                          <span>云端存储</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Shield className="h-3 w-3 text-blue-500" />
+                          <span>安全加密</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-gray-500" />
+                          <span>3分钟前完成</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-3 w-3 text-purple-500" />
+                          <span>PDF格式</span>
+                        </div>
                       </div>
                     </div>
                   </div>

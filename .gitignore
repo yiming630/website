@@ -3,7 +3,7 @@
 
 #Nathan think these are redundant, but don't want to mess up
 .claude
-
+.out-of-code-insights
 
 # Dependencies
 node_modules/
