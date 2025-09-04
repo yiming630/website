@@ -7,7 +7,12 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint src/",
-    "build": "echo 'No build step required for Node.js'"
+    "build": "echo 'No build step required for Node.js'",
+    "test:connections": "node test-connections.js",
+    "test:graphql": "node test-graphql.js",
+    "test:all": "npm run test:connections && npm run test:graphql",
+    "debug": "DEBUG=* npm run dev",
+    "health": "curl -s http://localhost:4000/health | json_pp || echo 'Server not running'"
   },
   "keywords": [
     "graphql",
@@ -32,10 +37,12 @@
     "graphql": "^16.8.1",
     "graphql-subscriptions": "^3.0.0",
     "graphql-tag": "^2.12.6",
+    "graphql-upload": "^17.0.0",
     "graphql-ws": "^5.16.2",
     "handlebars": "^4.7.8",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.19.0",
     "nodemailer": "^7.0.5",
     "pg": "^8.11.3",
     "subscriptions-transport-ws": "^0.11.0",

@@ -17,15 +17,37 @@ const config = {
 // Initialize connection pool
 function initializePool() {
   if (!pool) {
+    console.log('🔄 Initializing PostgreSQL connection pool...');
+    console.log('📍 PostgreSQL Configuration:');
+    console.log(`   Host: ${config.host}`);
+    console.log(`   Port: ${config.port}`);
+    console.log(`   Database: ${config.database}`);
+    console.log(`   User: ${config.user}`);
+    console.log(`   Password: ${config.password ? 'PROVIDED' : 'MISSING'}`);
+    console.log(`   Max Connections: ${config.max}`);
+    
     pool = new Pool(config);
     
     pool.on('error', (err) => {
-      console.error('Unexpected error on idle client', err);
+      console.error('❌ PostgreSQL unexpected error on idle client:', err.message);
+      console.error('🔍 Error Details:', {
+        code: err.code,
+        severity: err.severity,
+        detail: err.detail
+      });
       process.exit(-1);
     });
 
-    pool.on('connect', () => {
-      console.log('✅ Database connected successfully');
+    pool.on('connect', (client) => {
+      console.log('✅ PostgreSQL client connected to pool');
+    });
+
+    pool.on('acquire', () => {
+      console.log('🔗 PostgreSQL client acquired from pool');
+    });
+
+    pool.on('remove', () => {
+      console.log('➖ PostgreSQL client removed from pool');
     });
   }
   return pool;
@@ -56,10 +78,23 @@ async function query(text, params) {
 // Check database health
 async function checkHealth() {
   try {
-    const result = await query('SELECT 1 as health_check');
-    return result.rows.length > 0;
+    console.log('🏥 Checking PostgreSQL health...');
+    const result = await query('SELECT 1 as health_check, current_database() as db_name, version() as db_version');
+    if (result.rows.length > 0) {
+      console.log('✅ PostgreSQL health check passed');
+      console.log(`📊 Database: ${result.rows[0].db_name}`);
+      console.log(`📊 Version: ${result.rows[0].db_version.split(',')[0]}`);
+      return true;
+    }
+    return false;
   } catch (error) {
-    console.error('Database health check failed:', error);
+    console.error('❌ PostgreSQL health check failed:', error.message);
+    console.error('🔍 Error Details:', {
+      code: error.code,
+      severity: error.severity,
+      detail: error.detail,
+      hint: error.hint
+    });
     return false;
   }
 }

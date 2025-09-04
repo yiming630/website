@@ -1,564 +1,14 @@
 .
 ├── .dockerignore
+├── .DS_Store
+├── .env
 ├── .env.example
 ├── .gitignore
 ├── .out-of-code-insights
 │   └── annotations.json
+├── .portenv
 ├── .vscode
 │   └── settings.json
-├── ALIBABA_DIRECTMAIL_SETUP.md
-├── backend
-│   ├── check-services.js
-│   ├── databases
-│   │   └── migrations
-│   │       ├── 001_add_email_verification.sql
-│   │       └── 001_email_verification_simple.sql
-│   ├── QUEUE_TEST_SUMMARY.md
-│   ├── QUEUE_TESTING_GUIDE.md
-│   ├── README-Queue.md
-│   ├── services
-│   │   ├── api-gateway
-│   │   │   ├── Dockerfile
-│   │   │   ├── package-lock.json
-│   │   │   ├── package.json
-│   │   │   ├── README.md
-│   │   │   ├── src
-│   │   │   │   ├── graphql
-│   │   │   │   │   ├── README.md
-│   │   │   │   │   ├── resolvers
-│   │   │   │   │   │   ├── auth.js
-│   │   │   │   │   │   ├── document.js
-│   │   │   │   │   │   ├── index.js
-│   │   │   │   │   │   ├── project.js
-│   │   │   │   │   │   ├── translation.js
-│   │   │   │   │   │   └── user.js
-│   │   │   │   │   ├── schema.js
-│   │   │   │   │   └── test-api.js
-│   │   │   │   ├── index.js
-│   │   │   │   ├── main.js
-│   │   │   │   ├── middleware
-│   │   │   │   │   ├── auth.js
-│   │   │   │   │   ├── context.js
-│   │   │   │   │   └── README.md
-│   │   │   │   ├── resolvers
-│   │   │   │   │   ├── chatResolvers.js
-│   │   │   │   │   ├── configResolvers.js
-│   │   │   │   │   ├── documentResolvers.js
-│   │   │   │   │   ├── emailVerificationResolvers.js
-│   │   │   │   │   ├── index.js
-│   │   │   │   │   ├── projectResolvers.js
-│   │   │   │   │   └── userResolvers.js
-│   │   │   │   ├── schema
-│   │   │   │   │   └── typeDefs.js
-│   │   │   │   ├── server.js
-│   │   │   │   ├── services
-│   │   │   │   │   ├── emailService.js
-│   │   │   │   │   └── emailServiceResend.js
-│   │   │   │   ├── templates
-│   │   │   │   │   └── email-verification.hbs
-│   │   │   │   └── utils
-│   │   │   │       ├── auth.js
-│   │   │   │       ├── baiduServices.js
-│   │   │   │       ├── database.js
-│   │   │   │       ├── errorHandler.js
-│   │   │   │       ├── microservices.js
-│   │   │   │       ├── openRouterService.js
-│   │   │   │       ├── README.md
-│   │   │   │       └── validation.js
-│   │   │   └── test-api.js
-│   │   ├── collaboration-service
-│   │   │   └── package-lock.json
-│   │   └── user-service
-│   │       ├── Dockerfile
-│   │       ├── package-lock.json
-│   │       ├── package.json
-│   │       └── src
-│   │           ├── routes
-│   │           │   ├── auth.js
-│   │           │   └── users.js
-│   │           ├── server.js
-│   │           └── utils
-│   │               └── database.js
-│   ├── setup-queue-env.js
-│   ├── src
-│   │   ├── core
-│   │   │   ├── local_storage.py
-│   │   │   ├── localFileStorage.js
-│   │   │   ├── postgres_queue.py
-│   │   │   ├── postgresQueue.js
-│   │   │   ├── queueManager.js
-│   │   │   ├── redis_queue.py
-│   │   │   ├── redisQueue.js
-│   │   │   └── test-localFileStorage.js
-│   │   ├── middleware
-│   │   │   └── fileServe.js
-│   │   └── workers
-│   │       ├── redisTranslationWorker.js
-│   │       └── translationWorker.js
-│   ├── test-postgres-queue.js
-│   ├── test-queue-system.js
-│   ├── test-redis-queue.js
-│   └── test-translation-api.js
-├── CHINA_EMAIL_SETUP.md
-├── CLAUDE.md
-├── config
-│   ├── app
-│   │   ├── api-endpoints.json
-│   │   └── features.json
-│   ├── ENVIRONMENT_VARIABLES_GUIDE.md
-│   ├── environments
-│   │   ├── development.env
-│   │   ├── env.openrouter
-│   │   ├── production.env.example
-│   │   └── production.openrouter.env
-│   ├── README.md
-│   ├── services
-│   │   └── redis
-│   │       └── redis.conf
-│   └── test-env-config.js
-├── database
-│   ├── connection.js
-│   ├── connection.README.md
-│   ├── init.js
-│   ├── README.md
-│   ├── reset.js
-│   ├── schema.README.md
-│   ├── schema.sql
-│   └── schemas
-│       └── init.sql
-├── deploy.sh
-├── docker-compose.openrouter.yml
-├── docker-compose.yml
-├── Documentations
-│   ├── 服务器部署指南.md
-│   ├── 格式保留四种思路.md
-│   ├── 20-Day-Development-Plan-Revised.md
-│   ├── api
-│   │   └── API.md
-│   ├── architecture
-│   │   ├── Backend_Architecture.md
-│   │   └── frontend.md
-│   ├── DAY_1_2_SUMMARY.md
-│   ├── DEPLOYMENT.md
-│   ├── ENV_CONFIG_README.md
-│   ├── Frontend_Backend_Connection_Guide.md
-│   ├── Frontend_Backend_Integration_Plan.md
-│   ├── guides
-│   │   ├── PROJECT_SETUP_GUIDE.md
-│   │   ├── Queue_System_Testing_Guide.md
-│   │   └── WINDOWS_SETUP_GUIDE.md
-│   ├── PDF_Translation_Implementation_Plan.md
-│   ├── PRODUCTION_DEPLOYMENT_GUIDE.md
-│   ├── README.md
-│   ├── SeekHub_Backend_Integration_Plan.md
-│   ├── STRUCTURE_CLEANUP_PLAN.md
-│   └── Toolbar_Icons_Feature_TODO.md
-├── ecosystem.config.js
-├── EMAIL_SETUP_GUIDE.md
-├── EMAIL_VERIFICATION_PLAN.md
-├── ENV_CLEANUP_SUMMARY.md
-├── frontend
-│   ├── app
-│   │   ├── contact
-│   │   │   └── page.tsx
-│   │   ├── dashboard_MainPage
-│   │   │   ├── loading.tsx
-│   │   │   └── page.tsx
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   ├── loading.tsx
-│   │   ├── login
-│   │   │   └── page.tsx
-│   │   ├── page.tsx
-│   │   ├── preview
-│   │   │   └── page.tsx
-│   │   ├── reader-download
-│   │   │   └── page.tsx
-│   │   ├── reader-translating
-│   │   │   └── page.tsx
-│   │   ├── reader-workspace
-│   │   │   └── page.tsx
-│   │   ├── translate
-│   │   │   └── page.tsx
-│   │   ├── translate-editor
-│   │   │   ├── constants.ts
-│   │   │   ├── hooks
-│   │   │   │   ├── useAIChat.ts
-│   │   │   │   └── useTextSelection.ts
-│   │   │   ├── page.tsx
-│   │   │   └── types.ts
-│   │   ├── translating
-│   │   │   └── page.tsx
-│   │   ├── user-type
-│   │   │   └── page.tsx
-│   │   ├── verify-email
-│   │   │   └── page.tsx
-│   │   └── workspace
-│   │       ├── loading.tsx
-│   │       └── page.tsx
-│   ├── components
-│   │   ├── DocumentUpload.tsx
-│   │   ├── Providers.tsx
-│   │   ├── theme-provider.tsx
-│   │   ├── translate-editor
-│   │   │   ├── AIChatPanel.tsx
-│   │   │   ├── AITutorial.tsx
-│   │   │   ├── ColorPicker.tsx
-│   │   │   ├── EditorCanvas.tsx
-│   │   │   ├── EditorSection.tsx
-│   │   │   ├── ExportDialog.tsx
-│   │   │   ├── FindReplaceDialog.tsx
-│   │   │   ├── FormattingToolbar.tsx
-│   │   │   ├── Header.tsx
-│   │   │   ├── InsertImageDialog.tsx
-│   │   │   ├── InsertLinkDialog.tsx
-│   │   │   ├── InsertSymbolDialog.tsx
-│   │   │   ├── InsertTableDialog.tsx
-│   │   │   ├── LineHeightPicker.tsx
-│   │   │   ├── MainToolbar.tsx
-│   │   │   ├── SideBySideReviewPanel.tsx
-│   │   │   ├── StatusBar.tsx
-│   │   │   └── ViewSettingsDialog.tsx
-│   │   └── ui
-│   │       ├── accordion.tsx
-│   │       ├── alert-dialog.tsx
-│   │       ├── alert.tsx
-│   │       ├── aspect-ratio.tsx
-│   │       ├── avatar.tsx
-│   │       ├── badge.tsx
-│   │       ├── breadcrumb.tsx
-│   │       ├── button.tsx
-│   │       ├── calendar.tsx
-│   │       ├── card.tsx
-│   │       ├── carousel.tsx
-│   │       ├── chart.tsx
-│   │       ├── checkbox.tsx
-│   │       ├── collapsible.tsx
-│   │       ├── command.tsx
-│   │       ├── context-menu.tsx
-│   │       ├── dialog.tsx
-│   │       ├── drawer.tsx
-│   │       ├── dropdown-menu.tsx
-│   │       ├── form.tsx
-│   │       ├── hover-card.tsx
-│   │       ├── input-otp.tsx
-│   │       ├── input.tsx
-│   │       ├── label.tsx
-│   │       ├── menubar.tsx
-│   │       ├── navigation-menu.tsx
-│   │       ├── pagination.tsx
-│   │       ├── popover.tsx
-│   │       ├── progress.tsx
-│   │       ├── radio-group.tsx
-│   │       ├── resizable.tsx
-│   │       ├── scroll-area.tsx
-│   │       ├── select.tsx
-│   │       ├── separator.tsx
-│   │       ├── sheet.tsx
-│   │       ├── sidebar.tsx
-│   │       ├── skeleton.tsx
-│   │       ├── slider.tsx
-│   │       ├── sonner.tsx
-│   │       ├── switch.tsx
-│   │       ├── table.tsx
-│   │       ├── tabs.tsx
-│   │       ├── textarea.tsx
-│   │       ├── toast.tsx
-│   │       ├── toaster.tsx
-│   │       ├── toggle-group.tsx
-│   │       ├── toggle.tsx
-│   │       ├── tooltip.tsx
-│   │       ├── use-mobile.tsx
-│   │       └── use-toast.ts
-│   ├── components.json
-│   ├── context
-│   │   └── file-context.tsx
-│   ├── FRONTEND_BACKEND_CONNECTION_SUMMARY.md
-│   ├── hooks
-│   │   ├── use-mobile.tsx
-│   │   ├── use-toast.ts
-│   │   ├── useAuth.tsx
-│   │   └── useDocuments.ts
-│   ├── lib
-│   │   ├── apollo-client.ts
-│   │   ├── apollo-wrapper.tsx
-│   │   └── utils.ts
-│   ├── next.config.mjs
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── pnpm-lock.yaml
-│   ├── postcss.config.mjs
-│   ├── README_INTEGRATION.md
-│   ├── services
-│   │   ├── auth.service.ts
-│   │   ├── chat.service.ts
-│   │   ├── document.service.ts
-│   │   ├── documentService.ts
-│   │   └── project.service.ts
-│   ├── styles
-│   │   ├── editor.css
-│   │   └── globals.css
-│   ├── tailwind.config.ts
-│   ├── TEST_FRONTEND_BACKEND_CONNECTION.md
-│   ├── tsconfig.json
-│   └── types
-│       └── graphql.ts
-├── guidance
-│   ├── API_USAGE_EXAMPLES.md
-│   ├── ARCHITECTURE_DIAGRAMS.md
-│   ├── CODE_EXAMPLES_PATTERNS.md
-│   ├── CROSS_REFERENCES.md
-│   ├── DEPLOYMENT_GUIDE.md
-│   ├── DEVELOPMENT_WORKFLOW.md
-│   ├── DOCKER_EXPLANATION.md
-│   ├── FOLDER_STRUCTURE.md
-│   ├── illustration
-│   │   ├── configuration.md
-│   │   ├── database.md
-│   │   ├── documentation.md
-│   │   ├── frontend.md
-│   │   ├── infrastructure.md
-│   │   ├── root-configuration.md
-│   │   ├── services.md
-│   │   └── tools-and-scripts.md
-│   ├── NEXT_STEPS.md
-│   ├── PERFORMANCE_OPTIMIZATION.md
-│   ├── POSTGRESQL_ACCESS_GUIDE.md
-│   ├── PROJECT_OVERVIEW.md
-│   ├── README.md
-│   ├── SECURITY_BEST_PRACTICES.md
-│   └── TROUBLESHOOTING_GUIDE.md
-├── infrastructure
-│   └── docker
-│       ├── configs
-│       │   └── redis
-│       │       └── redis.conf
-│       └── docker-compose.yml
-├── package-lock.json
-├── package.json
-├── README.md
-├── scripts
-│   ├── npm-setup.sh
-│   ├── npm-start-backend.sh
-│   ├── npm-start-frontend.sh
-│   ├── quick-setup.sh
-│   ├── setup-openrouter-env.bat
-│   ├── setup-openrouter-env.sh
-│   ├── setup.sh
-│   └── test-auth.js
-├── simple-pm2.config.js
-├── test-db-connection.js
-├── tests
-│   ├── backend
-│   │   ├── test-database.js
-│   │   ├── test-email-verification.js
-│   │   └── test-graphql-api.js
-│   ├── FINAL_TEST_RESULTS.md
-│   ├── frontend
-│   │   └── test-pages.js
-│   ├── POSTGRESQL_SUCCESS.md
-│   ├── README.md
-│   ├── results
-│   │   ├── database-test-results.json
-│   │   ├── frontend-test-results.json
-│   │   └── graphql-api-test-results.json
-│   ├── run-tests.bat
-│   ├── run-tests.ps1
-│   ├── TEST_ISSUES.md
-│   └── UPDATED_API_TEST_RESULTS.md
-├── tools
-│   └── experiments
-│       └── PDF_to_DOCX
-│           └── PDF_to_DOCX
-│               ├── data
-│               │   ├── docx_raw
-│               │   │   └── .gitkeep
-│               │   ├── docx_split
-│               │   │   └── .gitkeep
-│               │   └── pdf
-│               │       ├── .gitkeep
-│               │       ├── Abel.docx
-│               │       ├── Abel.pdf
-│               │       ├── SwiftNotesForProfessionals.docx
-│               │       └── SwiftNotesForProfessionals.pdf
-│               ├── main.py
-│               ├── README.md
-│               ├── requirements.txt
-│               ├── SeekHub_Demo-main
-│               │   ├── .gitignore
-│               │   ├── backend
-│               │   │   ├── bin
-│               │   │   │   ├── enhanced_gui_monitor_new.py
-│               │   │   │   ├── gui_monitor.py
-│               │   │   │   └── quick_start.py
-│               │   │   ├── config
-│               │   │   │   ├── config.yaml
-│               │   │   │   ├── env.template
-│               │   │   │   └── templates
-│               │   │   │       ├── .env.example
-│               │   │   │       ├── config.yaml
-│               │   │   │       └── env.template
-│               │   │   ├── data
-│               │   │   │   └── samples
-│               │   │   │       └── sample_book.json
-│               │   │   ├── deployment
-│               │   │   │   └── docker
-│               │   │   │       ├── docker-compose.yml
-│               │   │   │       └── Dockerfile
-│               │   │   ├── Deployment_Scripts
-│               │   │   │   ├── deploy.sh
-│               │   │   │   └── start_enhanced_gui.sh
-│               │   │   ├── docs
-│               │   │   │   ├── architecture
-│               │   │   │   │   └── system_architecture.md
-│               │   │   │   ├── guides
-│               │   │   │   │   ├── README_legacy.md
-│               │   │   │   │   └── README_optimized.md
-│               │   │   │   └── PROJECT_STRUCTURE.md
-│               │   │   ├── env.openrouter.example
-│               │   │   ├── main.py
-│               │   │   ├── MIGRATION_GUIDE_OPENROUTER.md
-│               │   │   ├── PDF2Docx
-│               │   │   │   ├── __init__.py
-│               │   │   │   ├── .gitignore
-│               │   │   │   ├── clients
-│               │   │   │   │   ├── __init__.py
-│               │   │   │   │   ├── cloud_storage_client.py
-│               │   │   │   │   ├── gemini_client.py
-│               │   │   │   │   └── wps_client.py
-│               │   │   │   ├── config
-│               │   │   │   │   ├── __init__.py
-│               │   │   │   │   └── config.py
-│               │   │   │   ├── main.py
-│               │   │   │   ├── PROJECT_SUMMARY.md
-│               │   │   │   ├── README.md
-│               │   │   │   ├── requirements.txt
-│               │   │   │   └── utils
-│               │   │   │       ├── __init__.py
-│               │   │   │       ├── file_utils.py
-│               │   │   │       ├── logger.py
-│               │   │   │       └── text_utils.py
-│               │   │   ├── README.md
-│               │   │   ├── requirements.txt
-│               │   │   ├── src
-│               │   │   │   ├── __init__.py
-│               │   │   │   ├── common
-│               │   │   │   │   ├── __init__.py
-│               │   │   │   │   ├── config_manager.py
-│               │   │   │   │   ├── dependencies.py
-│               │   │   │   │   ├── error_handler.py
-│               │   │   │   │   ├── health_monitor.py
-│               │   │   │   │   └── logger.py
-│               │   │   │   ├── core
-│               │   │   │   │   ├── __init__.py
-│               │   │   │   │   ├── config_openrouter.py
-│               │   │   │   │   ├── config.py
-│               │   │   │   │   ├── docx_xml_translator.py
-│               │   │   │   │   ├── exporters.py
-│               │   │   │   │   ├── firestore_helper.py
-│               │   │   │   │   ├── gemini_client_openrouter.py
-│               │   │   │   │   ├── gemini_client.py
-│               │   │   │   │   ├── local_storage.py
-│               │   │   │   │   ├── pubsub_queue.py
-│               │   │   │   │   ├── test_local_storage_integration.py
-│               │   │   │   │   └── translation_orchestrator.py
-│               │   │   │   ├── gui
-│               │   │   │   │   ├── __init__.py
-│               │   │   │   │   ├── components
-│               │   │   │   │   │   ├── __init__.py
-│               │   │   │   │   │   ├── base.py
-│               │   │   │   │   │   ├── control_panel.py
-│               │   │   │   │   │   ├── header.py
-│               │   │   │   │   │   ├── monitor_panel.py
-│               │   │   │   │   │   └── status_bar.py
-│               │   │   │   │   ├── main_window.py
-│               │   │   │   │   └── theme.py
-│               │   │   │   ├── monitoring
-│               │   │   │   │   ├── __init__.py
-│               │   │   │   │   ├── process_monitor.py
-│               │   │   │   │   └── system_monitor.py
-│               │   │   │   ├── process_management
-│               │   │   │   │   ├── __init__.py
-│               │   │   │   │   └── worker_manager.py
-│               │   │   │   └── workers
-│               │   │   │       ├── __init__.py
-│               │   │   │       ├── chapter_worker.py
-│               │   │   │       └── combination_worker.py
-│               │   │   ├── start_workers.py
-│               │   │   ├── test_openrouter_client.py
-│               │   │   └── tools
-│               │   │       ├── health_check.py
-│               │   │       └── setup_dev.py
-│               │   ├── cursorPromptContext.md
-│               │   ├── PDF_to_DOCX
-│               │   │   ├── data
-│               │   │   │   ├── docx_raw
-│               │   │   │   │   └── .gitkeep
-│               │   │   │   ├── docx_split
-│               │   │   │   │   └── .gitkeep
-│               │   │   │   └── pdf
-│               │   │   │       ├── .gitkeep
-│               │   │   │       ├── Abel.docx
-│               │   │   │       ├── Abel.pdf
-│               │   │   │       ├── SwiftNotesForProfessionals.docx
-│               │   │   │       └── SwiftNotesForProfessionals.pdf
-│               │   │   ├── main.py
-│               │   │   ├── README.md
-│               │   │   ├── requirements.txt
-│               │   │   └── src
-│               │   │       ├── __init__.py
-│               │   │       ├── cloud_storage.py
-│               │   │       ├── config.py
-│               │   │       ├── converter.py
-│               │   │       ├── gemini_client.py
-│               │   │       ├── pdf_splitter.py
-│               │   │       ├── splitter.py
-│               │   │       └── wps_client.py
-│               │   ├── README.md
-│               │   ├── result
-│               │   │   ├── Abel_translated.docx
-│               │   │   └── Abel_translated.pdf
-│               │   ├── run_full_translation.py
-│               │   ├── temp
-│               │   │   ├── docx_raw
-│               │   │   │   └── Abel.docx
-│               │   │   └── docx_split
-│               │   │       └── Abel_split.docx
-│               │   └── translator
-│               │       ├── docker-compose.openrouter.yml
-│               │       ├── Dockerfile.openrouter
-│               │       ├── env.example
-│               │       ├── main_openrouter.py
-│               │       ├── main.py
-│               │       ├── MIGRATION_GUIDE.md
-│               │       ├── Procfile
-│               │       ├── README_OPENROUTER.md
-│               │       ├── requirements_openrouter.txt
-│               │       ├── requirements.txt
-│               │       ├── start_openrouter.bat
-│               │       ├── start_openrouter.sh
-│               │       └── test_translator.py
-│               └── src
-│                   ├── __init__.py
-│                   ├── cloud_storage.py
-│                   ├── config.py
-│                   ├── converter.py
-│                   ├── gemini_client.py
-│                   ├── pdf_splitter.py
-│                   ├── splitter.py
-│                   └── wps_client.py
-└── tree_structure.txt
-
-119 directories, 431 files
-.
-├── .dockerignore
-├── .env.example
-├── .gitignore
-├── .out-of-code-insights
-│   └── annotations.json
-├── .vscode
-│   └── settings.json
-├── ALIBABA_DIRECTMAIL_SETUP.md
 ├── app
 │   ├── api-gateway
 │   │   └── logs
@@ -573,60 +23,69 @@
 │   ├── databases
 │   │   └── migrations
 │   │       ├── 001_add_email_verification.sql
-│   │       └── 001_email_verification_simple.sql
+│   │       ├── 001_email_verification_simple.sql
+│   │       ├── 002_add_contact_management.sql
+│   │       └── 003_add_file_storage_metadata.sql
 │   ├── QUEUE_TEST_SUMMARY.md
 │   ├── QUEUE_TESTING_GUIDE.md
 │   ├── README-Queue.md
 │   ├── services
 │   │   ├── api-gateway
+│   │   │   ├── create-contact-tables.js
 │   │   │   ├── Dockerfile
+│   │   │   ├── init-contact-db.js
 │   │   │   ├── package-lock.json
 │   │   │   ├── package.json
 │   │   │   ├── README.md
-│   │   │   ├── src
-│   │   │   │   ├── graphql
-│   │   │   │   │   ├── README.md
-│   │   │   │   │   ├── resolvers
-│   │   │   │   │   │   ├── auth.js
-│   │   │   │   │   │   ├── document.js
-│   │   │   │   │   │   ├── index.js
-│   │   │   │   │   │   ├── project.js
-│   │   │   │   │   │   ├── translation.js
-│   │   │   │   │   │   └── user.js
-│   │   │   │   │   ├── schema.js
-│   │   │   │   │   └── test-api.js
-│   │   │   │   ├── index.js
-│   │   │   │   ├── main.js
-│   │   │   │   ├── middleware
-│   │   │   │   │   ├── auth.js
-│   │   │   │   │   ├── context.js
-│   │   │   │   │   └── README.md
-│   │   │   │   ├── resolvers
-│   │   │   │   │   ├── chatResolvers.js
-│   │   │   │   │   ├── configResolvers.js
-│   │   │   │   │   ├── documentResolvers.js
-│   │   │   │   │   ├── emailVerificationResolvers.js
-│   │   │   │   │   ├── index.js
-│   │   │   │   │   ├── projectResolvers.js
-│   │   │   │   │   └── userResolvers.js
-│   │   │   │   ├── schema
-│   │   │   │   │   └── typeDefs.js
-│   │   │   │   ├── server.js
-│   │   │   │   ├── services
-│   │   │   │   │   ├── emailService.js
-│   │   │   │   │   └── emailServiceResend.js
-│   │   │   │   ├── templates
-│   │   │   │   │   └── email-verification.hbs
-│   │   │   │   └── utils
-│   │   │   │       ├── auth.js
-│   │   │   │       ├── baiduServices.js
-│   │   │   │       ├── database.js
-│   │   │   │       ├── errorHandler.js
-│   │   │   │       ├── microservices.js
-│   │   │   │       ├── openRouterService.js
-│   │   │   │       ├── README.md
-│   │   │   │       └── validation.js
-│   │   │   └── test-api.js
+│   │   │   ├── run-contact-migration.js
+│   │   │   ├── run-migration.js
+│   │   │   └── src
+│   │   │       ├── graphql
+│   │   │       │   ├── README.md
+│   │   │       │   ├── resolvers
+│   │   │       │   │   ├── auth.js
+│   │   │       │   │   ├── document.js
+│   │   │       │   │   ├── index.js
+│   │   │       │   │   ├── project.js
+│   │   │       │   │   ├── translation.js
+│   │   │       │   │   └── user.js
+│   │   │       │   └── schema.js
+│   │   │       ├── index.js
+│   │   │       ├── main.js
+│   │   │       ├── middleware
+│   │   │       │   ├── auth.js
+│   │   │       │   ├── context.js
+│   │   │       │   └── README.md
+│   │   │       ├── resolvers
+│   │   │       │   ├── chatResolvers.js
+│   │   │       │   ├── configResolvers.js
+│   │   │       │   ├── contactResolvers.js
+│   │   │       │   ├── documentResolvers.js
+│   │   │       │   ├── emailVerificationResolvers.js
+│   │   │       │   ├── fileResolvers.js
+│   │   │       │   ├── index.js
+│   │   │       │   ├── projectResolvers.js
+│   │   │       │   └── userResolvers.js
+│   │   │       ├── routes
+│   │   │       │   └── init-contact.js
+│   │   │       ├── schema
+│   │   │       │   └── typeDefs.js
+│   │   │       ├── server.js
+│   │   │       ├── services
+│   │   │       │   ├── emailService.js
+│   │   │       │   └── emailServiceResend.js
+│   │   │       ├── templates
+│   │   │       │   └── email-verification.hbs
+│   │   │       └── utils
+│   │   │           ├── auth.js
+│   │   │           ├── baiduServices.js
+│   │   │           ├── database.js
+│   │   │           ├── errorHandler.js
+│   │   │           ├── microservices.js
+│   │   │           ├── openRouterService.js
+│   │   │           ├── README.md
+│   │   │           ├── runContactMigration.js
+│   │   │           └── validation.js
 │   │   ├── collaboration-service
 │   │   │   └── package-lock.json
 │   │   └── user-service
@@ -641,26 +100,20 @@
 │   │           └── utils
 │   │               └── database.js
 │   ├── setup-queue-env.js
-│   ├── src
-│   │   ├── core
-│   │   │   ├── local_storage.py
-│   │   │   ├── localFileStorage.js
-│   │   │   ├── postgres_queue.py
-│   │   │   ├── postgresQueue.js
-│   │   │   ├── queueManager.js
-│   │   │   ├── redis_queue.py
-│   │   │   ├── redisQueue.js
-│   │   │   └── test-localFileStorage.js
-│   │   ├── middleware
-│   │   │   └── fileServe.js
-│   │   └── workers
-│   │       ├── redisTranslationWorker.js
-│   │       └── translationWorker.js
-│   ├── test-postgres-queue.js
-│   ├── test-queue-system.js
-│   ├── test-redis-queue.js
-│   └── test-translation-api.js
-├── CHINA_EMAIL_SETUP.md
+│   └── src
+│       ├── core
+│       │   ├── local_storage.py
+│       │   ├── localFileStorage.js
+│       │   ├── postgres_queue.py
+│       │   ├── postgresQueue.js
+│       │   ├── queueManager.js
+│       │   ├── redis_queue.py
+│       │   └── redisQueue.js
+│       ├── middleware
+│       │   └── fileServe.js
+│       └── workers
+│           ├── redisTranslationWorker.js
+│           └── translationWorker.js
 ├── CLAUDE.md
 ├── config
 │   ├── app
@@ -673,13 +126,15 @@
 │   │   ├── production.env.example
 │   │   └── production.openrouter.env
 │   ├── README.md
-│   ├── services
-│   │   └── redis
-│   │       └── redis.conf
-│   └── test-env-config.js
+│   └── services
+│       ├── baidu
+│       │   └── baidu.env.example
+│       └── redis
+│           └── redis.conf
 ├── database
 │   ├── connection.js
 │   ├── connection.README.md
+│   ├── init-contact.js
 │   ├── init.js
 │   ├── README.md
 │   ├── reset.js
@@ -687,7 +142,6 @@
 │   ├── schema.sql
 │   └── schemas
 │       └── init.sql
-├── deploy.sh
 ├── docker-compose.openrouter.yml
 ├── docker-compose.yml
 ├── Documentations
@@ -715,13 +169,60 @@
 │   ├── STRUCTURE_CLEANUP_PLAN.md
 │   └── Toolbar_Icons_Feature_TODO.md
 ├── ecosystem.config.js
-├── EMAIL_SETUP_GUIDE.md
-├── EMAIL_VERIFICATION_PLAN.md
-├── ENV_CLEANUP_SUMMARY.md
 ├── frontend
+│   ├── .next
+│   │   ├── app-build-manifest.json
+│   │   ├── build-manifest.json
+│   │   ├── cache
+│   │   │   ├── .rscinfo
+│   │   │   ├── swc
+│   │   │   │   └── plugins
+│   │   │   │       └── v7_macos_aarch64_8.0.0
+│   │   │   └── webpack
+│   │   │       ├── client-development
+│   │   │       │   ├── 0.pack.gz
+│   │   │       │   ├── 1.pack.gz
+│   │   │       │   ├── 2.pack.gz
+│   │   │       │   ├── 3.pack.gz
+│   │   │       │   ├── 4.pack.gz
+│   │   │       │   ├── 5.pack.gz
+│   │   │       │   ├── 6.pack.gz
+│   │   │       │   ├── index.pack.gz
+│   │   │       │   └── index.pack.gz.old
+│   │   │       └── server-development
+│   │   │           ├── 0.pack.gz
+│   │   │           ├── 1.pack.gz
+│   │   │           ├── 2.pack.gz
+│   │   │           ├── 3.pack.gz
+│   │   │           ├── 4.pack.gz
+│   │   │           ├── 5.pack.gz
+│   │   │           ├── 6.pack.gz
+│   │   │           ├── index.pack.gz
+│   │   │           └── index.pack.gz.old
+│   │   ├── package.json
+│   │   ├── react-loadable-manifest.json
+│   │   ├── server
+│   │   │   ├── app-paths-manifest.json
+│   │   │   ├── interception-route-rewrite-manifest.js
+│   │   │   ├── middleware-build-manifest.js
+│   │   │   ├── middleware-manifest.json
+│   │   │   ├── middleware-react-loadable-manifest.js
+│   │   │   ├── next-font-manifest.js
+│   │   │   ├── next-font-manifest.json
+│   │   │   ├── pages-manifest.json
+│   │   │   ├── server-reference-manifest.js
+│   │   │   └── server-reference-manifest.json
+│   │   ├── static
+│   │   │   ├── chunks
+│   │   │   │   └── polyfills.js
+│   │   │   └── development
+│   │   │       ├── _buildManifest.js
+│   │   │       └── _ssgManifest.js
+│   │   ├── trace
+│   │   └── types
+│   │       ├── cache-life.d.ts
+│   │       └── package.json
 │   ├── app
-│   │   ├── contact
-│   │   │   └── page.tsx
 │   │   ├── dashboard_MainPage
 │   │   │   ├── loading.tsx
 │   │   │   └── page.tsx
@@ -759,6 +260,7 @@
 │   │       └── page.tsx
 │   ├── components
 │   │   ├── DocumentUpload.tsx
+│   │   ├── EnhancedFileUpload.tsx
 │   │   ├── Providers.tsx
 │   │   ├── theme-provider.tsx
 │   │   ├── translate-editor
@@ -844,6 +346,7 @@
 │   │   ├── apollo-client.ts
 │   │   ├── apollo-wrapper.tsx
 │   │   └── utils.ts
+│   ├── next-env.d.ts
 │   ├── next.config.mjs
 │   ├── package-lock.json
 │   ├── package.json
@@ -855,6 +358,7 @@
 │   │   ├── chat.service.ts
 │   │   ├── document.service.ts
 │   │   ├── documentService.ts
+│   │   ├── file.service.ts
 │   │   └── project.service.ts
 │   ├── styles
 │   │   ├── editor.css
@@ -862,16 +366,23 @@
 │   ├── tailwind.config.ts
 │   ├── TEST_FRONTEND_BACKEND_CONNECTION.md
 │   ├── tsconfig.json
-│   └── types
-│       └── graphql.ts
+│   ├── types
+│   │   ├── file-types.ts
+│   │   └── graphql.ts
+│   └── url-dependencies.json
 ├── guidance
+│   ├── ALIBABA_DIRECTMAIL_SETUP.md
 │   ├── API_USAGE_EXAMPLES.md
 │   ├── ARCHITECTURE_DIAGRAMS.md
+│   ├── CHINA_EMAIL_SETUP.md
 │   ├── CODE_EXAMPLES_PATTERNS.md
 │   ├── CROSS_REFERENCES.md
 │   ├── DEPLOYMENT_GUIDE.md
 │   ├── DEVELOPMENT_WORKFLOW.md
 │   ├── DOCKER_EXPLANATION.md
+│   ├── EMAIL_SETUP_GUIDE.md
+│   ├── EMAIL_VERIFICATION_PLAN.md
+│   ├── ENV_CLEANUP_SUMMARY.md
 │   ├── FOLDER_STRUCTURE.md
 │   ├── illustration
 │   │   ├── configuration.md
@@ -884,6 +395,7 @@
 │   │   └── tools-and-scripts.md
 │   ├── NEXT_STEPS.md
 │   ├── PERFORMANCE_OPTIMIZATION.md
+│   ├── PORT_CONFIGURATION.md
 │   ├── POSTGRESQL_ACCESS_GUIDE.md
 │   ├── PROJECT_OVERVIEW.md
 │   ├── README.md
@@ -895,11 +407,14 @@
 │       │   └── redis
 │       │       └── redis.conf
 │       └── docker-compose.yml
+├── load-env.js
 ├── logs
 ├── package-lock.json
 ├── package.json
 ├── README.md
 ├── scripts
+│   ├── deploy.sh
+│   ├── kill-ports.bat
 │   ├── npm-setup.sh
 │   ├── npm-start-backend.sh
 │   ├── npm-start-frontend.sh
@@ -907,27 +422,8 @@
 │   ├── setup-openrouter-env.bat
 │   ├── setup-openrouter-env.sh
 │   ├── setup.sh
-│   └── test-auth.js
+│   └── start-services.bat
 ├── simple-pm2.config.js
-├── test-db-connection.js
-├── tests
-│   ├── backend
-│   │   ├── test-database.js
-│   │   ├── test-email-verification.js
-│   │   └── test-graphql-api.js
-│   ├── FINAL_TEST_RESULTS.md
-│   ├── frontend
-│   │   └── test-pages.js
-│   ├── POSTGRESQL_SUCCESS.md
-│   ├── README.md
-│   ├── results
-│   │   ├── database-test-results.json
-│   │   ├── frontend-test-results.json
-│   │   └── graphql-api-test-results.json
-│   ├── run-tests.bat
-│   ├── run-tests.ps1
-│   ├── TEST_ISSUES.md
-│   └── UPDATED_API_TEST_RESULTS.md
 ├── tools
 │   └── experiments
 │       └── PDF_to_DOCX
@@ -1103,12 +599,8 @@
 │               └── src
 │                   ├── __init__.py
 │                   ├── cloud_storage.py
-│                   ├── config.py
-│                   ├── converter.py
-│                   ├── gemini_client.py
-│                   ├── pdf_splitter.py
-│                   ├── splitter.py
-│                   └── wps_client.py
+│                   └── config.py
+├── translation-pipeline-spec.md
 └── tree_structure.txt
 
-129 directories, 431 files
+139 directories, 465 files

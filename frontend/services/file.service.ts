@@ -1,3 +1,7 @@
+// File Service - MongoDB GridFS Integration
+// This service now works with MongoDB GridFS instead of Baidu Cloud Storage
+// All file operations go through the GraphQL API which handles GridFS internally
+
 import { gql } from '@apollo/client';
 import { apolloClient } from '@/lib/apollo-client';
 import {
@@ -390,7 +394,7 @@ export class FileService {
 
   static async downloadFile(fileId: string, filename?: string): Promise<void> {
     try {
-      // Get download URL
+      // Get download URL (now returns GridFS-based URL instead of Baidu Cloud)
       const downloadUrl = await this.generateDownloadUrl(fileId);
       
       // Create download link and trigger download

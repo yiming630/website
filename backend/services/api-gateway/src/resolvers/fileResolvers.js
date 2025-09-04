@@ -1,7 +1,7 @@
 const { GraphQLUpload } = require('graphql-upload');
-const baiduServices = require('../utils/baiduServices');
+const mongoFileService = require('../utils/mongoFileService');
 const errorHandler = require('../utils/errorHandler');
-const db = require('../../databases/connection');
+const db = require('../utils/database');
 const crypto = require('crypto');
 
 const fileResolvers = {
@@ -87,7 +87,7 @@ const fileResolvers = {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        const fileMetadata = await baiduServices.getFileMetadata(args.id, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(args.id, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
@@ -104,7 +104,7 @@ const fileResolvers = {
         if (!user) throw new Error('Authentication required');
 
         const options = args.options || {};
-        const files = await baiduServices.getUserFiles(user.id, {
+        const files = await mongoFileService.getUserFiles(user.id, {
           projectId: options.projectId,
           fileType: options.fileType,
           limit: options.limit || 50,
@@ -124,7 +124,7 @@ const fileResolvers = {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        const stats = await baiduServices.getStorageStats(user.id);
+        const stats = await mongoFileService.getStorageStats(user.id);
         return stats;
       } catch (error) {
         throw errorHandler.handleError(error);
@@ -136,15 +136,14 @@ const fileResolvers = {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        const fileMetadata = await baiduServices.getFileMetadata(args.fileId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(args.fileId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
 
-        const downloadUrl = await baiduServices.getBOSDownloadUrl(
-          fileMetadata.file_key,
+        const downloadUrl = await mongoFileService.getDownloadUrl(
+          fileMetadata,
           args.expiresIn || 3600,
-          fileMetadata.id,
           user.id
         );
 
@@ -180,7 +179,7 @@ const fileResolvers = {
         if (!user) throw new Error('Authentication required');
 
         const options = args.options || {};
-        const glossaries = await baiduServices.getUserGlossaries(user.id, options);
+        const glossaries = await mongoFileService.getUserGlossaries(user.id, options);
 
         return glossaries;
       } catch (error) {
@@ -219,7 +218,7 @@ const fileResolvers = {
         if (!user) throw new Error('Authentication required');
 
         // Check if user owns the file
-        const fileMetadata = await baiduServices.getFileMetadata(args.fileId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(args.fileId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
@@ -265,7 +264,7 @@ const fileResolvers = {
         if (!user) throw new Error('Authentication required');
 
         // Check if user owns the file
-        const fileMetadata = await baiduServices.getFileMetadata(args.fileId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(args.fileId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
@@ -310,7 +309,7 @@ const fileResolvers = {
         }
 
         // Upload file with metadata
-        const uploadResult = await baiduServices.uploadFileWithMetadata(null, {
+        const uploadResult = await mongoFileService.uploadFileWithMetadata(null, {
           userId: user.id,
           projectId: input.projectId,
           originalFilename: filename,
@@ -340,12 +339,12 @@ const fileResolvers = {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        const fileMetadata = await baiduServices.getFileMetadata(args.fileId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(args.fileId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
 
-        await baiduServices.deleteFromBOS(fileMetadata.file_key, fileMetadata.id, user.id);
+        await mongoFileService.deleteFile(fileMetadata.gridfs_file_id, fileMetadata.id, user.id);
         return true;
       } catch (error) {
         throw errorHandler.handleError(error);
@@ -357,7 +356,7 @@ const fileResolvers = {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        const fileMetadata = await baiduServices.getFileMetadata(args.fileId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(args.fileId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
@@ -384,12 +383,12 @@ const fileResolvers = {
         const { input } = args;
 
         // Verify file exists and user owns it
-        const fileMetadata = await baiduServices.getFileMetadata(input.fileMetadataId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(input.fileMetadataId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
 
-        const glossary = await baiduServices.createGlossaryMetadata({
+        const glossary = await mongoFileService.createGlossaryMetadata({
           fileMetadataId: input.fileMetadataId,
           userId: user.id,
           glossaryName: input.glossaryName,
@@ -464,7 +463,7 @@ const fileResolvers = {
         const { input } = args;
 
         // Verify file exists and user owns it
-        const fileMetadata = await baiduServices.getFileMetadata(input.fileMetadataId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(input.fileMetadataId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
@@ -565,15 +564,14 @@ const fileResolvers = {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        const fileMetadata = await baiduServices.getFileMetadata(args.fileId, user.id);
+        const fileMetadata = await mongoFileService.getFileMetadata(args.fileId, user.id);
         if (!fileMetadata) {
           throw new Error('File not found or access denied');
         }
 
-        const downloadUrl = await baiduServices.getBOSDownloadUrl(
-          fileMetadata.file_key,
+        const downloadUrl = await mongoFileService.getDownloadUrl(
+          fileMetadata,
           args.expiresIn || 3600,
-          fileMetadata.id,
           user.id
         );
 
@@ -588,7 +586,7 @@ const fileResolvers = {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        await baiduServices.logFileAccess({
+        await mongoFileService.logFileAccess({
           fileMetadataId: args.fileId,
           userId: user.id,
           accessType: args.accessType,

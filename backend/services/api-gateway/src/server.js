@@ -17,12 +17,17 @@ const typeDefs = require('./schema/typeDefs');
 const resolvers = require('./resolvers');
 const { createGraphQLContext } = require('./middleware/auth');
 const { checkHealth, initializePool } = require('./utils/database');
+const healthChecker = require('./utils/healthCheck');
 
 const app = express();
 const PORT = process.env.API_GATEWAY_PORT || process.env.PORT || 4002; // Use centralized port config
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Initialize database pool
+console.log('🚀 Starting API Gateway Server...');
+console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🔧 Port: ${PORT}`);
+console.log(`🔧 Host: ${HOST}`);
 initializePool();
 
 // Middleware
@@ -48,25 +53,36 @@ app.use(express.urlencoded({ extended: true }));
 const initContactRoute = require('./routes/init-contact');
 app.use('/api', initContactRoute);
 
-// Health check endpoint
+// File download routes for GridFS
+const fileDownloadRoute = require('./routes/fileDownload');
+app.use('/api/files', fileDownloadRoute);
+
+// Health check endpoints
 app.get('/health', async (req, res) => {
   try {
-    const dbHealthy = await checkHealth();
-    res.status(200).json({
-      status: dbHealthy ? 'healthy' : 'degraded',
-      service: 'api-gateway',
-      database: dbHealthy ? 'connected' : 'disconnected',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    });
+    const quickHealth = await healthChecker.quickCheck();
+    res.json(quickHealth);
   } catch (error) {
-    res.status(503).json({
-      status: 'unhealthy',
-      service: 'api-gateway',
-      database: 'error',
+    res.status(500).json({
+      status: 'error',
       error: error.message,
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Detailed health check endpoint
+app.get('/health/detailed', async (req, res) => {
+  try {
+    const detailedHealth = await healthChecker.checkAllServices();
+    const statusCode = detailedHealth.overall === 'healthy' ? 200 : 
+                       detailedHealth.overall === 'degraded' ? 200 : 503;
+    res.status(statusCode).json(detailedHealth);
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -87,6 +103,24 @@ app.get('/', (req, res) => {
 async function startServer() {
   try {
     console.log('🔧 Starting Apollo Server with WebSocket support...');
+    
+    // Run comprehensive health check on startup
+    console.log('\n' + '='.repeat(60));
+    console.log('🔍 RUNNING STARTUP DIAGNOSTICS');
+    console.log('='.repeat(60));
+    
+    const healthResults = await healthChecker.checkAllServices();
+    
+    if (healthResults.overall === 'unhealthy') {
+      console.error('❌ Critical services are unhealthy. Server may not function properly.');
+      console.error('🔧 Please check your configuration and try again.');
+    } else if (healthResults.overall === 'degraded') {
+      console.warn('⚠️  Some services are degraded. Server will start but functionality may be limited.');
+    } else {
+      console.log('✅ All services are healthy. Ready to start server.');
+    }
+    
+    console.log('='.repeat(60) + '\n');
     
     // Create HTTP server
     const httpServer = createServer(app);
@@ -134,9 +168,15 @@ async function startServer() {
 
     // Start HTTP server first
     const httpServerInstance = httpServer.listen(PORT, HOST, () => {
-      console.log(`🚀 API Gateway running on http://${HOST}:${PORT}`);
-      console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
+      console.log('\n' + '🎉'.repeat(20));
+      console.log('✅ API GATEWAY SERVER STARTED SUCCESSFULLY');
+      console.log('🎉'.repeat(20));
+      console.log(`🚀 Server: http://${HOST}:${PORT}`);
+      console.log(`📊 Health Check: http://${HOST}:${PORT}/health`);
+      console.log(`🔍 Detailed Health: http://${HOST}:${PORT}/health/detailed`);
       console.log(`🔍 GraphQL Playground: http://${HOST}:${PORT}${server.graphqlPath}`);
+      console.log(`📁 File Downloads: http://${HOST}:${PORT}/api/files/download/{id}`);
+      console.log('🎉'.repeat(20) + '\n');
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 
       // Create WebSocket server after HTTP server is listening
