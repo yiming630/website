@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS contact_categories (
 -- 4. Create contact templates table (for common responses)
 CREATE TABLE IF NOT EXISTS contact_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     subject VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     category VARCHAR(100) NULL,
@@ -75,45 +75,80 @@ CREATE INDEX IF NOT EXISTS idx_contact_responses_created_at ON contact_responses
 
 -- 6. Add foreign key constraints
 DO $$ 
+DECLARE 
+    users_id_type text;
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+    -- Check if users table exists and get the id column type
+    SELECT data_type INTO users_id_type
+    FROM information_schema.columns 
+    WHERE table_name = 'users' AND column_name = 'id';
+    
+    -- Only add foreign keys if users table has UUID id column
+    IF users_id_type = 'uuid' THEN
         -- Contact inquiries can be linked to registered users
-        ALTER TABLE contact_inquiries 
-        ADD CONSTRAINT fk_contact_inquiries_user_id 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_contact_inquiries_user_id') THEN
+            ALTER TABLE contact_inquiries 
+            ADD CONSTRAINT fk_contact_inquiries_user_id 
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
         
         -- Inquiries can be assigned to admin users
-        ALTER TABLE contact_inquiries 
-        ADD CONSTRAINT fk_contact_inquiries_assigned_to 
-        FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_contact_inquiries_assigned_to') THEN
+            ALTER TABLE contact_inquiries 
+            ADD CONSTRAINT fk_contact_inquiries_assigned_to 
+            FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
         
         -- Responses are linked to admin users
-        ALTER TABLE contact_responses 
-        ADD CONSTRAINT fk_contact_responses_admin_id 
-        FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_contact_responses_admin_id') THEN
+            ALTER TABLE contact_responses 
+            ADD CONSTRAINT fk_contact_responses_admin_id 
+            FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE;
+        END IF;
         
         -- Templates can be created by users
-        ALTER TABLE contact_templates 
-        ADD CONSTRAINT fk_contact_templates_created_by 
-        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_contact_templates_created_by') THEN
+            ALTER TABLE contact_templates 
+            ADD CONSTRAINT fk_contact_templates_created_by 
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
+    ELSE
+        RAISE NOTICE 'Skipping foreign key constraints - users table not found or id column is not UUID type (found: %)', COALESCE(users_id_type, 'table not found');
     END IF;
 END $$;
 
 -- Contact responses must belong to an inquiry
-ALTER TABLE contact_responses 
-ADD CONSTRAINT fk_contact_responses_inquiry_id 
-FOREIGN KEY (inquiry_id) REFERENCES contact_inquiries(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_contact_responses_inquiry_id') THEN
+        ALTER TABLE contact_responses 
+        ADD CONSTRAINT fk_contact_responses_inquiry_id 
+        FOREIGN KEY (inquiry_id) REFERENCES contact_inquiries(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
--- 7. Create triggers for automatic timestamp updates
-CREATE TRIGGER IF NOT EXISTS update_contact_inquiries_timestamp 
+-- 7. Create update timestamp function
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create triggers for automatic timestamp updates
+DROP TRIGGER IF EXISTS update_contact_inquiries_timestamp ON contact_inquiries;
+CREATE TRIGGER update_contact_inquiries_timestamp 
     BEFORE UPDATE ON contact_inquiries 
     FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
-CREATE TRIGGER IF NOT EXISTS update_contact_responses_timestamp 
+DROP TRIGGER IF EXISTS update_contact_responses_timestamp ON contact_responses;
+CREATE TRIGGER update_contact_responses_timestamp 
     BEFORE UPDATE ON contact_responses 
     FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
-CREATE TRIGGER IF NOT EXISTS update_contact_templates_timestamp 
+DROP TRIGGER IF EXISTS update_contact_templates_timestamp ON contact_templates;
+CREATE TRIGGER update_contact_templates_timestamp 
     BEFORE UPDATE ON contact_templates 
     FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
@@ -169,7 +204,7 @@ INSERT INTO contact_templates (name, subject, content, category) VALUES
 
 祝您使用愉快！
 格式译专家团队', '使用帮助')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO NOTHING;
 
 -- 10. Create function to get inquiry statistics
 CREATE OR REPLACE FUNCTION get_contact_stats(

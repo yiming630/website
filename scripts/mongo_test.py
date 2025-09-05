@@ -11,7 +11,7 @@ def test_mongodb_comprehensive():
     print("=" * 50)
     
     # Your existing connection string
-    uri = "mongodb://root:pA(5k*rW)z!3Tqe@UFj6R21Uq.mongodb.bj.baidubce.com:27017/admin"
+    uri = "mongodb://180.76.147.2:27017/translation_platform"
     
     # Database for the translation platform
     db_name = os.getenv('MONGODB_DB_NAME', 'translation_platform')

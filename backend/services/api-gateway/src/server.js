@@ -57,6 +57,10 @@ app.use('/api', initContactRoute);
 const fileDownloadRoute = require('./routes/fileDownload');
 app.use('/api/files', fileDownloadRoute);
 
+// File upload routes (modern REST approach)
+const fileUploadRoute = require('./routes/fileUpload');
+app.use('/api/files', fileUploadRoute);
+
 // Health check endpoints
 app.get('/health', async (req, res) => {
   try {

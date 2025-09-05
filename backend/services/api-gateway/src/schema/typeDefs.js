@@ -797,7 +797,8 @@ const typeDefs = `
     deleteContactInquiry(id: ID!): Boolean!
     
     # File storage mutations
-    uploadFile(file: Upload!, input: FileUploadInput!): FileUploadResult!
+    # NOTE: File uploads are now handled via REST endpoints /api/files/upload
+    uploadFileMetadata(input: FileUploadInput!): FileUploadResult!
     deleteFile(fileId: ID!): Boolean!
     updateFileMetadata(fileId: ID!, metadata: JSON!): FileMetadata!
     

@@ -1,8 +1,8 @@
 -- File Storage Metadata Schema Migration
 -- Creates tables for managing file uploads to Baidu Cloud with comprehensive metadata storage
 
--- 1. Create file metadata table
-CREATE TABLE IF NOT EXISTS file_metadata (
+-- 1. Create extended file metadata table (file_metadata already exists from migration 005)
+CREATE TABLE IF NOT EXISTS file_metadata_advanced (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     project_id UUID NULL, -- Can be linked to a specific project
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS file_metadata (
 -- 2. Create glossary files table (specialization for translation glossaries)
 CREATE TABLE IF NOT EXISTS glossary_files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    file_metadata_id UUID NOT NULL,
+    file_metadata_advanced_id UUID NOT NULL,
     user_id UUID NOT NULL,
     
     -- Glossary properties
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS glossary_files (
 -- 3. Create file sharing table
 CREATE TABLE IF NOT EXISTS file_shares (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    file_metadata_id UUID NOT NULL,
+    file_metadata_advanced_id UUID NOT NULL,
     shared_by UUID NOT NULL, -- User who shared the file
     shared_with UUID NULL, -- User who received access (NULL for public links)
     
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS file_shares (
 -- 4. Create file access logs table (for audit and analytics)
 CREATE TABLE IF NOT EXISTS file_access_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    file_metadata_id UUID NOT NULL,
+    file_metadata_advanced_id UUID NOT NULL,
     user_id UUID NULL, -- NULL for anonymous access
     
     -- Access details
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS file_access_logs (
 -- 5. Create file processing jobs table (for async processing)
 CREATE TABLE IF NOT EXISTS file_processing_jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    file_metadata_id UUID NOT NULL,
+    file_metadata_advanced_id UUID NOT NULL,
     
     -- Job configuration
     job_type VARCHAR(100) NOT NULL, -- thumbnail_generation, text_extraction, virus_scan, translation
@@ -193,118 +193,167 @@ CREATE TABLE IF NOT EXISTS file_processing_jobs (
 );
 
 -- 6. Create indexes for optimal performance
-CREATE INDEX IF NOT EXISTS idx_file_metadata_user_id ON file_metadata(user_id);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_project_id ON file_metadata(project_id);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_file_hash ON file_metadata(file_hash);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_file_key ON file_metadata(file_key);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_upload_status ON file_metadata(upload_status);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_processing_status ON file_metadata(processing_status);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_file_type ON file_metadata(file_type);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_created_at ON file_metadata(created_at);
-CREATE INDEX IF NOT EXISTS idx_file_metadata_deleted_at ON file_metadata(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_user_id ON file_metadata_advanced(user_id);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_project_id ON file_metadata_advanced(project_id);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_file_hash ON file_metadata_advanced(file_hash);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_file_key ON file_metadata_advanced(file_key);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_upload_status ON file_metadata_advanced(upload_status);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_processing_status ON file_metadata_advanced(processing_status);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_file_type ON file_metadata_advanced(file_type);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_created_at ON file_metadata_advanced(created_at);
+CREATE INDEX IF NOT EXISTS idx_file_metadata_advanced_deleted_at ON file_metadata_advanced(deleted_at);
 
-CREATE INDEX IF NOT EXISTS idx_glossary_files_file_metadata_id ON glossary_files(file_metadata_id);
+CREATE INDEX IF NOT EXISTS idx_glossary_files_file_metadata_advanced_id ON glossary_files(file_metadata_advanced_id);
 CREATE INDEX IF NOT EXISTS idx_glossary_files_user_id ON glossary_files(user_id);
 CREATE INDEX IF NOT EXISTS idx_glossary_files_languages ON glossary_files(source_language, target_language);
 CREATE INDEX IF NOT EXISTS idx_glossary_files_domain ON glossary_files(domain);
 CREATE INDEX IF NOT EXISTS idx_glossary_files_is_public ON glossary_files(is_public);
 
-CREATE INDEX IF NOT EXISTS idx_file_shares_file_metadata_id ON file_shares(file_metadata_id);
+CREATE INDEX IF NOT EXISTS idx_file_shares_file_metadata_advanced_id ON file_shares(file_metadata_advanced_id);
 CREATE INDEX IF NOT EXISTS idx_file_shares_shared_by ON file_shares(shared_by);
 CREATE INDEX IF NOT EXISTS idx_file_shares_shared_with ON file_shares(shared_with);
 CREATE INDEX IF NOT EXISTS idx_file_shares_share_token ON file_shares(share_token);
 CREATE INDEX IF NOT EXISTS idx_file_shares_is_active ON file_shares(is_active);
 
-CREATE INDEX IF NOT EXISTS idx_file_access_logs_file_metadata_id ON file_access_logs(file_metadata_id);
+CREATE INDEX IF NOT EXISTS idx_file_access_logs_file_metadata_advanced_id ON file_access_logs(file_metadata_advanced_id);
 CREATE INDEX IF NOT EXISTS idx_file_access_logs_user_id ON file_access_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_file_access_logs_access_type ON file_access_logs(access_type);
 CREATE INDEX IF NOT EXISTS idx_file_access_logs_accessed_at ON file_access_logs(accessed_at);
 
-CREATE INDEX IF NOT EXISTS idx_file_processing_jobs_file_metadata_id ON file_processing_jobs(file_metadata_id);
+CREATE INDEX IF NOT EXISTS idx_file_processing_jobs_file_metadata_advanced_id ON file_processing_jobs(file_metadata_advanced_id);
 CREATE INDEX IF NOT EXISTS idx_file_processing_jobs_status ON file_processing_jobs(job_status);
 CREATE INDEX IF NOT EXISTS idx_file_processing_jobs_type ON file_processing_jobs(job_type);
 CREATE INDEX IF NOT EXISTS idx_file_processing_jobs_priority ON file_processing_jobs(priority DESC);
 
 -- 7. Add foreign key constraints
 DO $$ 
+DECLARE 
+    users_id_type text;
+    projects_id_type text;
 BEGIN
-    -- Check if referenced tables exist before adding constraints
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        ALTER TABLE file_metadata 
-        ADD CONSTRAINT fk_file_metadata_user_id 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+    -- Check if users table exists and get the id column type
+    SELECT data_type INTO users_id_type
+    FROM information_schema.columns 
+    WHERE table_name = 'users' AND column_name = 'id';
+    
+    -- Only add foreign keys if users table has UUID id column
+    IF users_id_type = 'uuid' THEN
+        -- Check if constraints don't already exist
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_metadata_advanced_user_id') THEN
+            ALTER TABLE file_metadata_advanced 
+            ADD CONSTRAINT fk_file_metadata_advanced_user_id 
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+        END IF;
         
-        ALTER TABLE glossary_files 
-        ADD CONSTRAINT fk_glossary_files_user_id 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_glossary_files_user_id') THEN
+            ALTER TABLE glossary_files 
+            ADD CONSTRAINT fk_glossary_files_user_id 
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+        END IF;
         
-        ALTER TABLE glossary_files 
-        ADD CONSTRAINT fk_glossary_files_validated_by 
-        FOREIGN KEY (validated_by) REFERENCES users(id) ON DELETE SET NULL;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_glossary_files_validated_by') THEN
+            ALTER TABLE glossary_files 
+            ADD CONSTRAINT fk_glossary_files_validated_by 
+            FOREIGN KEY (validated_by) REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
         
-        ALTER TABLE file_shares 
-        ADD CONSTRAINT fk_file_shares_shared_by 
-        FOREIGN KEY (shared_by) REFERENCES users(id) ON DELETE CASCADE;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_shares_shared_by') THEN
+            ALTER TABLE file_shares 
+            ADD CONSTRAINT fk_file_shares_shared_by 
+            FOREIGN KEY (shared_by) REFERENCES users(id) ON DELETE CASCADE;
+        END IF;
         
-        ALTER TABLE file_shares 
-        ADD CONSTRAINT fk_file_shares_shared_with 
-        FOREIGN KEY (shared_with) REFERENCES users(id) ON DELETE CASCADE;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_shares_shared_with') THEN
+            ALTER TABLE file_shares 
+            ADD CONSTRAINT fk_file_shares_shared_with 
+            FOREIGN KEY (shared_with) REFERENCES users(id) ON DELETE CASCADE;
+        END IF;
         
-        ALTER TABLE file_shares 
-        ADD CONSTRAINT fk_file_shares_revoked_by 
-        FOREIGN KEY (revoked_by) REFERENCES users(id) ON DELETE SET NULL;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_shares_revoked_by') THEN
+            ALTER TABLE file_shares 
+            ADD CONSTRAINT fk_file_shares_revoked_by 
+            FOREIGN KEY (revoked_by) REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
         
-        ALTER TABLE file_access_logs 
-        ADD CONSTRAINT fk_file_access_logs_user_id 
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_access_logs_user_id') THEN
+            ALTER TABLE file_access_logs 
+            ADD CONSTRAINT fk_file_access_logs_user_id 
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
+    ELSE
+        RAISE NOTICE 'Skipping user foreign key constraints - users table not found or id column is not UUID type (found: %)', COALESCE(users_id_type, 'table not found');
     END IF;
     
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects') THEN
-        ALTER TABLE file_metadata 
-        ADD CONSTRAINT fk_file_metadata_project_id 
-        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL;
+    -- Check projects table exists and has compatible id type
+    SELECT data_type INTO projects_id_type
+    FROM information_schema.columns 
+    WHERE table_name = 'projects' AND column_name = 'id';
+    
+    IF projects_id_type = 'uuid' THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_metadata_advanced_project_id') THEN
+            ALTER TABLE file_metadata_advanced 
+            ADD CONSTRAINT fk_file_metadata_advanced_project_id 
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL;
+        END IF;
+    ELSE
+        RAISE NOTICE 'Skipping projects foreign key constraint - projects table not found or id column is not UUID type (found: %)', COALESCE(projects_id_type, 'table not found');
     END IF;
 END $$;
 
 -- Add file metadata references
-ALTER TABLE glossary_files 
-ADD CONSTRAINT fk_glossary_files_file_metadata_id 
-FOREIGN KEY (file_metadata_id) REFERENCES file_metadata(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_glossary_files_file_metadata_advanced_id') THEN
+        ALTER TABLE glossary_files 
+        ADD CONSTRAINT fk_glossary_files_file_metadata_advanced_id 
+        FOREIGN KEY (file_metadata_advanced_id) REFERENCES file_metadata_advanced(id) ON DELETE CASCADE;
+    END IF;
 
-ALTER TABLE file_shares 
-ADD CONSTRAINT fk_file_shares_file_metadata_id 
-FOREIGN KEY (file_metadata_id) REFERENCES file_metadata(id) ON DELETE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_shares_file_metadata_advanced_id') THEN
+        ALTER TABLE file_shares 
+        ADD CONSTRAINT fk_file_shares_file_metadata_advanced_id 
+        FOREIGN KEY (file_metadata_advanced_id) REFERENCES file_metadata_advanced(id) ON DELETE CASCADE;
+    END IF;
 
-ALTER TABLE file_access_logs 
-ADD CONSTRAINT fk_file_access_logs_file_metadata_id 
-FOREIGN KEY (file_metadata_id) REFERENCES file_metadata(id) ON DELETE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_access_logs_file_metadata_advanced_id') THEN
+        ALTER TABLE file_access_logs 
+        ADD CONSTRAINT fk_file_access_logs_file_metadata_advanced_id 
+        FOREIGN KEY (file_metadata_advanced_id) REFERENCES file_metadata_advanced(id) ON DELETE CASCADE;
+    END IF;
 
-ALTER TABLE file_processing_jobs 
-ADD CONSTRAINT fk_file_processing_jobs_file_metadata_id 
-FOREIGN KEY (file_metadata_id) REFERENCES file_metadata(id) ON DELETE CASCADE;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_file_processing_jobs_file_metadata_advanced_id') THEN
+        ALTER TABLE file_processing_jobs 
+        ADD CONSTRAINT fk_file_processing_jobs_file_metadata_advanced_id 
+        FOREIGN KEY (file_metadata_advanced_id) REFERENCES file_metadata_advanced(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
--- 8. Create triggers for automatic timestamp updates
-CREATE TRIGGER IF NOT EXISTS update_file_metadata_timestamp 
-    BEFORE UPDATE ON file_metadata 
+-- 8. Create triggers for automatic timestamp updates (reuse function from previous migration)
+DROP TRIGGER IF EXISTS update_file_metadata_advanced_timestamp ON file_metadata_advanced;
+CREATE TRIGGER update_file_metadata_advanced_timestamp 
+    BEFORE UPDATE ON file_metadata_advanced 
     FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
-CREATE TRIGGER IF NOT EXISTS update_glossary_files_timestamp 
+DROP TRIGGER IF EXISTS update_glossary_files_timestamp ON glossary_files;
+CREATE TRIGGER update_glossary_files_timestamp 
     BEFORE UPDATE ON glossary_files 
     FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
-CREATE TRIGGER IF NOT EXISTS update_file_shares_timestamp 
+DROP TRIGGER IF EXISTS update_file_shares_timestamp ON file_shares;
+CREATE TRIGGER update_file_shares_timestamp 
     BEFORE UPDATE ON file_shares 
     FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
-CREATE TRIGGER IF NOT EXISTS update_file_processing_jobs_timestamp 
+DROP TRIGGER IF EXISTS update_file_processing_jobs_timestamp ON file_processing_jobs;
+CREATE TRIGGER update_file_processing_jobs_timestamp 
     BEFORE UPDATE ON file_processing_jobs 
     FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
 -- 9. Create functions for file management
-CREATE OR REPLACE FUNCTION soft_delete_file(file_id UUID)
+CREATE OR REPLACE FUNCTION soft_delete_file_advanced(file_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
-    UPDATE file_metadata 
+    UPDATE file_metadata_advanced 
     SET deleted_at = CURRENT_TIMESTAMP,
         upload_status = 'deleted'
     WHERE id = file_id AND deleted_at IS NULL;
@@ -328,7 +377,7 @@ BEGIN
             COUNT(*) as file_count,
             SUM(file_size) as size_bytes,
             ROUND(SUM(file_size)::NUMERIC / 1024 / 1024, 2) as size_mb
-        FROM file_metadata 
+        FROM file_metadata_advanced 
         WHERE (user_id_param IS NULL OR user_id = user_id_param)
         AND deleted_at IS NULL
     ),
@@ -344,7 +393,7 @@ BEGIN
     ),
     recent AS (
         SELECT COUNT(*) as recent_count
-        FROM file_metadata 
+        FROM file_metadata_advanced 
         WHERE (user_id_param IS NULL OR user_id = user_id_param)
         AND deleted_at IS NULL
         AND created_at >= CURRENT_TIMESTAMP - INTERVAL '7 days'
@@ -384,7 +433,7 @@ CREATE OR REPLACE FUNCTION update_presigned_url(
 )
 RETURNS BOOLEAN AS $$
 BEGIN
-    UPDATE file_metadata 
+    UPDATE file_metadata_advanced 
     SET presigned_url = new_url,
         presigned_expires_at = CURRENT_TIMESTAMP + INTERVAL '1 second' * expires_in_seconds,
         updated_at = CURRENT_TIMESTAMP

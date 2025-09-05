@@ -82,7 +82,6 @@ const resolvers = {
   },
 
   // Type resolvers
-  Upload: fileResolvers.Upload,
   User: userResolvers.User,
   Project: projectResolvers.Project,
   Document: documentResolvers.Document,

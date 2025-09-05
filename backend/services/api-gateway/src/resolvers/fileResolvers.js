@@ -1,11 +1,10 @@
-const { GraphQLUpload } = require('graphql-upload');
 const mongoFileService = require('../utils/mongoFileService');
 const errorHandler = require('../utils/errorHandler');
 const db = require('../utils/database');
 const crypto = require('crypto');
 
 const fileResolvers = {
-  Upload: GraphQLUpload,
+  // Modern file upload will be handled via REST endpoint, not GraphQL scalar
 
   // Type resolvers
   FileMetadata: {
@@ -282,39 +281,23 @@ const fileResolvers = {
   },
 
   Mutation: {
-    uploadFile: async (parent, args, context) => {
+    // NOTE: File upload is now handled via REST endpoint /api/files/upload
+    // This mutation is kept for metadata operations only
+    uploadFileMetadata: async (parent, args, context) => {
       try {
         const { user } = context;
         if (!user) throw new Error('Authentication required');
 
-        const { file, input } = args;
-        const { createReadStream, filename, mimetype, encoding } = await file;
-
-        // Read file stream to buffer
-        const stream = createReadStream();
-        const chunks = [];
+        const { input } = args;
         
-        await new Promise((resolve, reject) => {
-          stream.on('data', chunk => chunks.push(chunk));
-          stream.on('end', resolve);
-          stream.on('error', reject);
-        });
-        
-        const fileBuffer = Buffer.concat(chunks);
-
-        // Validate file size (500MB limit)
-        const maxSize = 524288000; // 500MB
-        if (fileBuffer.length > maxSize) {
-          throw new Error('File size exceeds maximum limit of 500MB');
-        }
-
-        // Upload file with metadata
-        const uploadResult = await mongoFileService.uploadFileWithMetadata(null, {
+        // This mutation only handles metadata creation
+        // The actual file upload happens via REST endpoint
+        const fileMetadata = await mongoFileService.createFileMetadata({
           userId: user.id,
           projectId: input.projectId,
-          originalFilename: filename,
-          fileBuffer,
-          contentType: mimetype,
+          originalFilename: input.filename,
+          contentType: input.contentType,
+          fileSize: input.fileSize,
           sourceLanguage: input.sourceLanguage,
           targetLanguage: input.targetLanguage,
           translationStyle: input.translationStyle,
@@ -323,11 +306,9 @@ const fileResolvers = {
         });
 
         return {
-          success: uploadResult.success,
-          fileMetadata: uploadResult.fileMetadata,
-          uploadResult: uploadResult.uploadResult,
-          isDuplicate: uploadResult.isDuplicate,
-          message: uploadResult.isDuplicate ? 'File already exists' : 'File uploaded successfully'
+          success: true,
+          fileMetadata: fileMetadata,
+          message: 'File metadata created successfully. Use REST endpoint for file upload.'
         };
       } catch (error) {
         throw errorHandler.handleError(error);

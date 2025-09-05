@@ -144,8 +144,24 @@ async function createGraphQLContext(req) {
   };
 }
 
+// Express middleware to authenticate token and set req.user
+async function authenticateToken(req, res, next) {
+  try {
+    const user = await authenticateUser(req);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Token authentication error:', error);
+    res.status(500).json({
+      error: 'Authentication service error',
+      message: 'Failed to verify authentication'
+    });
+  }
+}
+
 module.exports = {
   authenticateUser,
+  authenticateToken,
   requireAuth,
   requireRole,
   hasPermission,

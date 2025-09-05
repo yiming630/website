@@ -1,0 +1,18 @@
+-- Fix file_metadata table to match backend expectations
+-- Add all missing columns that the backend code expects
+
+ALTER TABLE file_metadata 
+ADD COLUMN IF NOT EXISTS storage_class VARCHAR(50) DEFAULT 'STANDARD',
+ADD COLUMN IF NOT EXISTS is_encrypted BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS access_permissions JSONB DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS file_url VARCHAR(2000) NULL,
+ADD COLUMN IF NOT EXISTS cdn_url VARCHAR(2000) NULL,
+ADD COLUMN IF NOT EXISTS presigned_url VARCHAR(3000) NULL,
+ADD COLUMN IF NOT EXISTS presigned_expires_at TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS thumbnail_urls JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS processing_logs JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS upload_session_id VARCHAR(100) NULL,
+ADD COLUMN IF NOT EXISTS total_parts INTEGER NULL,
+ADD COLUMN IF NOT EXISTS completed_parts INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS upload_progress INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS last_accessed_at TIMESTAMP NULL;
